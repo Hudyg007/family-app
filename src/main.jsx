@@ -22,7 +22,8 @@ createRoot(document.getElementById("root")).render(
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", async () => {
     try {
-      const reg = await navigator.serviceWorker.register("/sw.js");
+      // BASE_URL is "/" in dev and "/family-app/" on GitHub Pages
+      const reg = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`);
 
       // Check for a new SW every hour while the app is open
       setInterval(() => reg.update(), 60 * 60 * 1000);
