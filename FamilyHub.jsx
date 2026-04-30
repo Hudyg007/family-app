@@ -3251,13 +3251,11 @@ export default function App() {
   return (
     <FamilyCtx.Provider value={ctx}>
       <AppStyles />
-      {/* Fixed viewport shell — dark bg so any empty space below content
-          matches the nav bar instead of showing a white/light gap */}
       <div style={{
         position:"fixed", top:0, left:0, right:0, bottom:0,
         width:"100%", height:"100dvh",
         overflow:"hidden",
-        background:"#ECEAF8", fontFamily:"'Inter',system-ui,sans-serif",
+        background:"#1E1B4B", fontFamily:"'Inter',system-ui,sans-serif",
         display:"flex",
       }}>
         <Sidebar active={active} setActive={setActive} collapsed={collapsed} setCollapsed={setCollapsed} pendingCount={pendingRequests.filter(r => r.status === "pending").length} />
@@ -3361,9 +3359,7 @@ export default function App() {
                so any empty space below the last card shows dark (matches nav). */}
           <div style={{ flex:1, overflowY:"auto", WebkitOverflowScrolling:"touch", background:"#ECEAF8", minHeight:0 }}>
             <div className="p-4 md:p-8 max-w-6xl mx-auto" style={{
-              background:"#ECEAF8",
-              paddingBottom:"calc(env(safe-area-inset-bottom) + 80px)",
-              minHeight:"100dvh",
+              paddingBottom:"calc(env(safe-area-inset-bottom) + 56px)",
             }}>
               {renderPage()}
             </div>
@@ -3387,3 +3383,4 @@ export default function App() {
     </FamilyCtx.Provider>
   );
 }
+  
