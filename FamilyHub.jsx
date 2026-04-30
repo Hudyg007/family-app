@@ -3250,7 +3250,7 @@ export default function App() {
 
           {/* ── Header ── */}
           <div className="flex-shrink-0 backdrop-blur border-b px-4 md:px-6 flex items-center justify-between"
-               style={{ paddingTop:"calc(env(safe-area-inset-top) + 10px)", paddingBottom:10, background:"linear-gradient(135deg,#1E1B4B 0%,#4338CA 100%)", borderColor:"rgba(255,255,255,0.1)" }}>
+               style={{ paddingTop:"calc(env(safe-area-inset-top) + 4px)", paddingBottom:6, background:"linear-gradient(135deg,#1E1B4B 0%,#4338CA 100%)", borderColor:"rgba(255,255,255,0.1)" }}>
 
             {/* Left: logo / dashboard */}
             <button onClick={() => setActive("home")} className="flex items-center gap-2">
@@ -3346,6 +3346,7 @@ export default function App() {
             <div className="p-4 md:p-8 max-w-6xl mx-auto" style={{
               background:"#ECEAF8",
               paddingBottom:"calc(env(safe-area-inset-bottom) + 64px)",
+              minHeight:"100%",
             }}>
               {renderPage()}
             </div>
