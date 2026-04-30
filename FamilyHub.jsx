@@ -354,7 +354,6 @@ function MobileBottomNav({ active, setActive, pendingCount }) {
         style={{
           background: "#1E1B4B",
           borderTop: "1px solid rgba(255,255,255,0.08)",
-          paddingBottom: "env(safe-area-inset-bottom)",
           boxShadow: "0 -4px 20px rgba(0,0,0,0.15)",
           zIndex: 100,
           width: "100%",
@@ -366,24 +365,32 @@ function MobileBottomNav({ active, setActive, pendingCount }) {
           const badge = n.id === "calendar" && pendingCount > 0 ? pendingCount : 0;
           return (
             <button key={n.id} onClick={() => pick(n.id)}
-              className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 relative transition-colors"
-              style={{ color: isActive ? "#A5B4FC" : "rgba(255,255,255,0.45)" }}>
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 relative transition-colors"
+              style={{
+                color: isActive ? "#A5B4FC" : "rgba(255,255,255,0.45)",
+                paddingTop: 8,
+                paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)",
+              }}>
               {badge > 0 && (
                 <span className="absolute top-1.5 left-1/2 translate-x-1 bg-amber-400 text-gray-900 text-xs font-bold w-4 h-4 rounded-full flex items-center justify-center leading-none z-10">
                   {badge}
                 </span>
               )}
-              <Icon size={22} />
+              <Icon size={20} />
               <span className="text-xs font-medium leading-tight">{n.label}</span>
-              {isActive && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full" style={{ background:"#A5B4FC" }} />}
+              {isActive && <div className="absolute left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full" style={{ background:"#A5B4FC", bottom:"calc(env(safe-area-inset-bottom) + 2px)" }} />}
             </button>
           );
         })}
         {/* More button */}
         <button onClick={() => setMoreOpen(o => !o)}
-          className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-colors"
-          style={{ color: moreOpen ? "#A5B4FC" : "rgba(255,255,255,0.45)" }}>
-          <MoreVertical size={22} />
+          className="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors"
+          style={{
+            color: moreOpen ? "#A5B4FC" : "rgba(255,255,255,0.45)",
+            paddingTop: 8,
+            paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)",
+          }}>
+          <MoreVertical size={20} />
           <span className="text-xs font-medium leading-tight">More</span>
         </button>
       </div>
@@ -3355,7 +3362,7 @@ export default function App() {
           <div style={{ flex:1, overflowY:"auto", WebkitOverflowScrolling:"touch", background:"transparent", minHeight:0 }}>
             <div className="p-4 md:p-8 max-w-6xl mx-auto" style={{
               background:"#ECEAF8",
-              paddingBottom:"calc(env(safe-area-inset-bottom) + 64px)",
+              paddingBottom:"calc(env(safe-area-inset-bottom) + 56px)",
               minHeight:"100%",
             }}>
               {renderPage()}

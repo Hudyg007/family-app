@@ -1,7 +1,7 @@
 /* Family Hub — Service Worker
    Bump CACHE_VERSION whenever you deploy to force all clients to update. */
 
-const CACHE_VERSION = "v1777564088486";
+const CACHE_VERSION = "v1777567603757";
 const CACHE_NAME    = `family-app-${CACHE_VERSION}`;
 
 // Derive base path from where the SW is installed (works in dev "/" and prod "/family-app/")
