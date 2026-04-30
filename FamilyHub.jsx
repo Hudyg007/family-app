@@ -388,14 +388,23 @@ function MobileBottomNav({ active, setActive, pendingCount }) {
         </button>
       </div>
 
-      {/* More sheet — slides up */}
-      {moreOpen && (
+      {/* More sheet — rendered into body so it sits above the nav bar (z-index 100) */}
+      {moreOpen && createPortal(
         <>
           {/* Backdrop */}
-          <div className="fixed inset-0 bg-black/20 z-30 md:hidden" onClick={() => setMoreOpen(false)} />
           <div
-            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-50 md:hidden fadeUp"
-            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
+            style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.2)", zIndex:150 }}
+            onClick={() => setMoreOpen(false)}
+          />
+          <div
+            className="fadeUp"
+            style={{
+              position:"fixed", bottom:0, left:0, right:0,
+              background:"white", borderRadius:"24px 24px 0 0",
+              boxShadow:"0 -8px 40px rgba(0,0,0,0.18)",
+              paddingBottom:"calc(env(safe-area-inset-bottom) + 16px)",
+              zIndex:200,
+            }}
           >
             <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mt-3 mb-5" />
             <div className="grid grid-cols-3 gap-3 px-5 pb-2">
@@ -412,7 +421,8 @@ function MobileBottomNav({ active, setActive, pendingCount }) {
               })}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </>
   );
