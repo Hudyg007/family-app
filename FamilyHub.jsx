@@ -2018,8 +2018,9 @@ function AppStyles() {
       .bottom-nav-height { height: calc(60px + env(safe-area-inset-bottom)); }
       .bottom-nav-pad    { padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
 
-      /* Fill the safe-area gap below bottom nav */
-      body::after {
+      /* Fill the safe-area gap below bottom nav — must be on html not body
+         because body has overflow:hidden which clips body::after in some browsers */
+      html::after {
         content: "";
         position: fixed;
         bottom: 0; left: 0; right: 0;
@@ -3233,12 +3234,13 @@ export default function App() {
   return (
     <FamilyCtx.Provider value={ctx}>
       <AppStyles />
-      {/* Fixed viewport shell — prevents iOS rubber-band scroll of whole page */}
+      {/* Fixed viewport shell — dark bg so any empty space below content
+          matches the nav bar instead of showing a white/light gap */}
       <div style={{
         position:"fixed", top:0, left:0, right:0, bottom:0,
         width:"100%", height:"100dvh",
         overflow:"hidden",
-        background:"#ECEAF8", fontFamily:"'Inter',system-ui,sans-serif",
+        background:"#1E1B4B", fontFamily:"'Inter',system-ui,sans-serif",
         display:"flex",
       }}>
         <Sidebar active={active} setActive={setActive} collapsed={collapsed} setCollapsed={setCollapsed} pendingCount={pendingRequests.filter(r => r.status === "pending").length} />
@@ -3336,9 +3338,15 @@ export default function App() {
             </div>
           </div>
 
-          {/* ── Scrollable content ── */}
-          <div style={{ flex:1, overflowY:"auto", WebkitOverflowScrolling:"touch", background:"#ECEAF8", minHeight:0 }}>
-            <div className="p-4 md:p-8 max-w-6xl mx-auto" style={{ paddingBottom:"calc(env(safe-area-inset-bottom) + 80px)", minHeight:"100%" }}>
+          {/* ── Scrollable content ──
+               Scrollable div is transparent so the dark shell shows below content.
+               Inner wrapper carries the ECEAF8 background — only as tall as content,
+               so any empty space below the last card shows dark (matches nav). */}
+          <div style={{ flex:1, overflowY:"auto", WebkitOverflowScrolling:"touch", background:"transparent", minHeight:0 }}>
+            <div className="p-4 md:p-8 max-w-6xl mx-auto" style={{
+              background:"#ECEAF8",
+              paddingBottom:"calc(env(safe-area-inset-bottom) + 64px)",
+            }}>
               {renderPage()}
             </div>
           </div>

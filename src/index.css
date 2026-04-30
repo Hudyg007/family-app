@@ -14,24 +14,28 @@ html {
   height: 100%;
   margin: 0;
   padding: 0;
-  /* Dark so the safe-area gap at the bottom matches the nav, not white */
+  /* Dark bg — any viewport bleed or safe-area gap shows dark (matches nav) */
   background: #1E1B4B;
 }
 
-body, #root {
+body {
   height: 100%;
   margin: 0;
   padding: 0;
+  /* Also dark — no white flash on rubber-band overscroll */
+  background: #1E1B4B;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
-  background: #ECEAF8;
-}
-
-/* Prevent iOS rubber-band scroll on the body */
-body {
   overflow: hidden;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
+}
+
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: #1E1B4B;
 }
 
 /* iOS input zoom prevention — 16px stops auto-zoom */
