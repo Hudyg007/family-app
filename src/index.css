@@ -10,7 +10,15 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
+html {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  /* Dark so the safe-area gap at the bottom matches the nav, not white */
+  background: #1E1B4B;
+}
+
+body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -23,7 +31,6 @@ html, body, #root {
 body {
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
-  background: #ECEAF8;
 }
 
 /* iOS input zoom prevention — 16px stops auto-zoom */
