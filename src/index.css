@@ -29,6 +29,7 @@ body, #root {
 
 /* Prevent iOS rubber-band scroll on the body */
 body {
+  overflow: hidden;
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
 }

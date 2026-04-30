@@ -1,7 +1,7 @@
 /* Family Hub — Service Worker
    Bump CACHE_VERSION whenever you deploy to force all clients to update. */
 
-const CACHE_VERSION = "v1777525139115";
+const CACHE_VERSION = "v1777525735149";
 const CACHE_NAME    = `family-app-${CACHE_VERSION}`;
 
 const PRECACHE = [

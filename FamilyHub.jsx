@@ -279,7 +279,7 @@ function Sidebar({ active, setActive, collapsed, setCollapsed, pendingCount }) {
   const { members, getColor } = useFamily();
   return (
     <aside
-      style={{ background: "#1E1B4B", minHeight: "100vh", transition: "width .25s" }}
+      style={{ background: "#1E1B4B", minHeight: "100dvh", transition: "width .25s" }}
       className={`hidden md:flex flex-col flex-shrink-0 ${collapsed ? "w-16" : "w-56"}`}
     >
       <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
@@ -350,12 +350,14 @@ function MobileBottomNav({ active, setActive, pendingCount }) {
     <>
       {/* Bottom tab bar */}
       <div
-        className="fixed bottom-0 left-0 right-0 flex md:hidden z-40"
+        className="fixed bottom-0 left-0 right-0 flex md:hidden"
         style={{
           background: "#1E1B4B",
           borderTop: "1px solid rgba(255,255,255,0.08)",
           paddingBottom: "env(safe-area-inset-bottom)",
           boxShadow: "0 -4px 20px rgba(0,0,0,0.15)",
+          zIndex: 100,
+          width: "100%",
         }}
       >
         {primaryItems.map(n => {
@@ -1977,18 +1979,21 @@ function AppStyles() {
       html {
         height: 100%;
         height: -webkit-fill-available;
+        overflow: hidden;
         overscroll-behavior: none;
       }
       body {
-        min-height: 100%;
-        min-height: -webkit-fill-available;
+        height: 100%;
+        overflow: hidden;
         overscroll-behavior: none;
         -webkit-tap-highlight-color: transparent;
         -webkit-text-size-adjust: 100%;
       }
       #root {
-        min-height: 100vh;
+        min-height: 100dvh;
         min-height: -webkit-fill-available;
+        display: flex;
+        flex-direction: column;
       }
 
       /* Prevent iOS zoom on input focus (needs font-size >= 16px) */
@@ -2020,7 +2025,7 @@ function AppStyles() {
         bottom: 0; left: 0; right: 0;
         height: env(safe-area-inset-bottom);
         background: #1E1B4B;
-        z-index: 39;
+        z-index: 99;
         pointer-events: none;
       }
     `}</style>
@@ -2963,7 +2968,7 @@ function KidView({ kid, events, chores, setChores, wallets, setWallets, goals, s
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background:"#F0F4FF" }}>
       <AppStyles />
-      <div className="w-full max-w-sm mx-auto min-h-screen bg-white flex flex-col shadow-2xl" style={{ maxHeight:"100vh" }}>
+      <div className="w-full max-w-sm mx-auto bg-white flex flex-col shadow-2xl" style={{ minHeight:"100dvh", maxHeight:"100dvh" }}>
         {/* Header — pt accounts for iPhone notch/Dynamic Island */}
         <div style={{ background:c.bg, paddingTop:"calc(env(safe-area-inset-top) + 24px)" }} className="px-5 pb-6 text-white flex-shrink-0">
           <div className="flex items-center justify-between">
@@ -3230,7 +3235,9 @@ export default function App() {
       <AppStyles />
       {/* Fixed viewport shell — prevents iOS rubber-band scroll of whole page */}
       <div style={{
-        position:"fixed", inset:0, overflow:"hidden",
+        position:"fixed", top:0, left:0, right:0, bottom:0,
+        width:"100%", height:"100dvh",
+        overflow:"hidden",
         background:"#ECEAF8", fontFamily:"'Inter',system-ui,sans-serif",
         display:"flex",
       }}>
@@ -3330,8 +3337,8 @@ export default function App() {
           </div>
 
           {/* ── Scrollable content ── */}
-          <div className="flex-1 overflow-y-auto" style={{ WebkitOverflowScrolling:"touch", background:"#ECEAF8" }}>
-            <div className="p-4 md:p-8 max-w-6xl mx-auto" style={{ paddingBottom:"calc(env(safe-area-inset-bottom) + 80px)" }}>
+          <div style={{ flex:1, overflowY:"auto", WebkitOverflowScrolling:"touch", background:"#ECEAF8", minHeight:0 }}>
+            <div className="p-4 md:p-8 max-w-6xl mx-auto" style={{ paddingBottom:"calc(env(safe-area-inset-bottom) + 80px)", minHeight:"100%" }}>
               {renderPage()}
             </div>
           </div>
