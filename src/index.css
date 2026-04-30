@@ -1,0 +1,32 @@
+/* Inter font — must be first */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global resets for mobile PWA */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: #ECEAF8;
+}
+
+/* Prevent iOS rubber-band scroll on the body */
+body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  background: #ECEAF8;
+}
+
+/* iOS input zoom prevention — 16px stops auto-zoom */
+input, select, textarea {
+  font-size: 16px;
+}
