@@ -112,7 +112,7 @@ export default function WeeklyCalendarGrid({ mealPlanner, setMealPlanner }) {
                 <input
                   value={newType}
                   onChange={(e) => setNewType(e.target.value)}
-                  autoFocus
+                 
                   placeholder="e.g. Snack"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") addMealType();

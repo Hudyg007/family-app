@@ -469,7 +469,7 @@ function EventModal({ evt, title, onSave, onClose }) {
     <Modal title={title} onClose={onClose}>
       <div className="space-y-4">
         <Fld label="Title">
-          <input value={f.title} onChange={e => set({ title: e.target.value })} className={INP} placeholder="Event name" autoFocus />
+          <input value={f.title} onChange={e => set({ title: e.target.value })} className={INP} placeholder="Event name" />
         </Fld>
         <div className="grid grid-cols-2 gap-3">
           <Fld label="Date"><input type="date" value={f.date} onChange={e => set({ date: e.target.value })} className={INP} /></Fld>
@@ -808,7 +808,7 @@ function ChoreModal({ chore, title, onSave, onClose }) {
   return (
     <Modal title={title} onClose={onClose}>
       <div className="space-y-4">
-        <Fld label="Title"><input value={f.title} onChange={e => set({ title: e.target.value })} className={INP} placeholder="Chore name" autoFocus /></Fld>
+        <Fld label="Title"><input value={f.title} onChange={e => set({ title: e.target.value })} className={INP} placeholder="Chore name" /></Fld>
         <div className="grid grid-cols-2 gap-3">
           <Fld label="Assigned To">
             <select value={f.assignee} onChange={e => set({ assignee: e.target.value })} className={INP}>
@@ -1048,7 +1048,7 @@ function ListsModule({ lists, setLists }) {
                       {item.done && <Check size={11} className="text-white" />}
                     </button>
                     {editId === item.id
-                      ? <input value={editTxt} onChange={e => setEditTxt(e.target.value)} autoFocus onBlur={() => saveEdit(item.id)}
+                      ? <input value={editTxt} onChange={e => setEditTxt(e.target.value)}  onBlur={() => saveEdit(item.id)}
                           onKeyDown={e => { if (e.key === "Enter") saveEdit(item.id); if (e.key === "Escape") setEditId(null); }}
                           className="flex-1 border border-indigo-300 rounded-lg px-2 py-0.5 text-sm focus:outline-none" />
                       : <span onClick={() => { setEditId(item.id); setEditTxt(item.text); }} className={`flex-1 text-sm text-gray-700 cursor-text ${item.done ? "line-through" : ""}`}>{item.text}</span>
@@ -1063,7 +1063,7 @@ function ListsModule({ lists, setLists }) {
       </div>
       {showNew && (
         <Modal title="New List" onClose={() => setShowNew(false)}>
-          <input value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === "Enter" && addList()} className={`${INP} mb-4`} placeholder="List name" autoFocus />
+          <input value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === "Enter" && addList()} className={`${INP} mb-4`} placeholder="List name" />
           <div className="flex gap-3">
             <button onClick={() => setShowNew(false)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
             <button onClick={addList} className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">Create</button>
@@ -1097,7 +1097,7 @@ function AllowanceModal({ initial, memberId, memberName, onSave, onClose }) {
     <Modal title={initial ? "Edit Recurring Payment" : `New Recurring Payment — ${memberName}`} onClose={onClose}>
       <div className="space-y-4">
         <Fld label="Payment Name">
-          <input value={f.title} onChange={e => set({ title:e.target.value })} className={INP} placeholder="Allowance" autoFocus />
+          <input value={f.title} onChange={e => set({ title:e.target.value })} className={INP} placeholder="Allowance" />
         </Fld>
         <div className="grid grid-cols-2 gap-3">
           <Fld label="Amount">
@@ -1363,7 +1363,7 @@ function WalletModule({ wallets, setWallets, allowances, setAllowances }) {
       {adjPot && (
         <Modal title={`Adjust ${adjPot} pot for ${m?.name}`} onClose={() => setAdjPot(null)}>
           <p className="text-sm text-gray-500 mb-4">Positive to add, negative to remove (e.g. -5).</p>
-          <Fld label="Amount"><input type="number" step="0.50" value={adjAmt} onChange={e => setAdjAmt(e.target.value)} className={INP} placeholder="e.g. 10 or -3" autoFocus /></Fld>
+          <Fld label="Amount"><input type="number" step="0.50" value={adjAmt} onChange={e => setAdjAmt(e.target.value)} className={INP} placeholder="e.g. 10 or -3" /></Fld>
           <div className="flex gap-3 mt-5">
             <button onClick={() => setAdjPot(null)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
             <button onClick={adj} className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">Apply</button>
@@ -1405,7 +1405,7 @@ function GoalForm({ kids, initialData, mode, onSave, onClose }) {
         </select>
       </Fld>
       <Fld label="Goal Name">
-        <input value={f.title} onChange={e => set({ title: e.target.value })} className={INP} placeholder="e.g. New bike" autoFocus />
+        <input value={f.title} onChange={e => set({ title: e.target.value })} className={INP} placeholder="e.g. New bike" />
       </Fld>
       <div className="grid grid-cols-2 gap-3">
         <Fld label="Target ($)"><input type="number" value={f.target} onChange={e => set({ target: +e.target.value })} className={INP} /></Fld>
@@ -1592,7 +1592,7 @@ function BudgetModule({ budget, setBudget }) {
               return (
                 <div key={b.id} className="px-5 py-4 bg-indigo-50/50">
                   <div className="flex items-center gap-3 flex-wrap">
-                    <input value={ef.cat} onChange={e => setEf(f => ({ ...f, cat: e.target.value }))} autoFocus className="border border-indigo-300 rounded-lg px-3 py-1.5 text-sm w-32 focus:outline-none" placeholder="Category" />
+                    <input value={ef.cat} onChange={e => setEf(f => ({ ...f, cat: e.target.value }))}  className="border border-indigo-300 rounded-lg px-3 py-1.5 text-sm w-32 focus:outline-none" placeholder="Category" />
                     <div className="flex items-center gap-1">
                       <span className="text-xs text-gray-500">Budget: $</span>
                       <input type="number" value={ef.budgeted} onChange={e => setEf(f => ({ ...f, budgeted: e.target.value }))} className="border border-indigo-300 rounded-lg px-2 py-1.5 text-sm w-24 focus:outline-none" />
@@ -1633,7 +1633,7 @@ function BudgetModule({ budget, setBudget }) {
       {showAdd && (
         <Modal title="Add Budget Category" onClose={() => setShowAdd(false)}>
           <div className="space-y-4">
-            <Fld label="Category Name"><input value={nc.cat} onChange={e => setNc(n => ({ ...n, cat: e.target.value }))} className={INP} placeholder="e.g. Subscriptions" autoFocus /></Fld>
+            <Fld label="Category Name"><input value={nc.cat} onChange={e => setNc(n => ({ ...n, cat: e.target.value }))} className={INP} placeholder="e.g. Subscriptions" /></Fld>
             <div className="grid grid-cols-2 gap-3">
               <Fld label="Budget ($)"><input type="number" value={nc.budgeted} onChange={e => setNc(n => ({ ...n, budgeted: e.target.value }))} className={INP} /></Fld>
               <Fld label="Spent ($)"><input type="number" value={nc.spent} onChange={e => setNc(n => ({ ...n, spent: e.target.value }))} className={INP} /></Fld>
@@ -1670,7 +1670,7 @@ function MemberModal({ member, onSave, onClose }) {
             <p className="text-xs text-gray-400 capitalize">{f.role}</p>
           </div>
         </div>
-        <Fld label="Name"><input value={f.name} onChange={e => set({ name: e.target.value })} className={INP} placeholder="First name" autoFocus /></Fld>
+        <Fld label="Name"><input value={f.name} onChange={e => set({ name: e.target.value })} className={INP} placeholder="First name" /></Fld>
         <Fld label="Role">
           <div className="flex gap-3 mt-1">
             {["parent","child"].map(r => (
@@ -2606,7 +2606,7 @@ function FamilyMemberSelection({ members, onLogin, onSignOut, onSwitchAccount, o
               onChange={e => setFamilyName(e.target.value)}
               className={INP}
               placeholder={`Family name (e.g. ${fName})`}
-              autoFocus
+             
               onKeyDown={e => { if (e.key === "Enter" && pin.length === 4) tryParentLogin(); }}
             />
             <input
@@ -2845,7 +2845,7 @@ function KidDay({ events, kid, pendingRequests, setPendingRequests }) {
                   <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">What's the event?</label>
-                      <input value={reqTitle} onChange={e => setReqTitle(e.target.value)} className={INP} placeholder="e.g. Sleepover at Jake's" autoFocus />
+                      <input value={reqTitle} onChange={e => setReqTitle(e.target.value)} className={INP} placeholder="e.g. Sleepover at Jake's" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -3172,7 +3172,7 @@ function KidGoalsView({ goals, setGoals, wallets, kid }) {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">What are you saving for?</label>
-                <input value={newTitle} onChange={e => setNewTitle(e.target.value)} className={INP} placeholder="e.g. New bike" autoFocus />
+                <input value={newTitle} onChange={e => setNewTitle(e.target.value)} className={INP} placeholder="e.g. New bike" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">How much does it cost? ($)</label>
@@ -3352,6 +3352,26 @@ export default function App() {
     const t = setTimeout(() => pushFamilyToCloud(account?.email, payload), 3000);
     return () => clearTimeout(t);
   }, [members, events, chores, lists, wallets, goals, budget, allowances, mealPlanner, pendingRequests, notifications, issueReports, activityLog]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* iOS keyboard scroll-reset — when the keyboard closes the visual viewport grows
+     back; iOS sometimes leaves a residual scroll offset that pushes fixed elements
+     (the bottom nav) up and creates a gap.  Snap everything back to 0 on dismiss. */
+  useEffect(() => {
+    if (!window.visualViewport) return;
+    let lastH = window.visualViewport.height;
+    const onResize = () => {
+      const h = window.visualViewport.height;
+      if (h > lastH + 80) {
+        // Viewport just grew — keyboard dismissed; reset any iOS-induced scroll
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }
+      lastH = h;
+    };
+    window.visualViewport.addEventListener("resize", onResize);
+    return () => window.visualViewport.removeEventListener("resize", onResize);
+  }, []);
 
   const getColor = id => { const m = members.find(x => x.id === id); return m ? getP(m.colorKey) : null; };
 

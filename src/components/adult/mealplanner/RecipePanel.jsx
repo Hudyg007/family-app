@@ -127,7 +127,7 @@ export default function RecipePanel({ cell, meal, mealPlanner, setMealPlanner, o
           {/* Recipe name */}
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Recipe Name *</label>
-            <input value={recipeName} onChange={(e) => setRecipeName(e.target.value)} placeholder="e.g. Spaghetti Bolognese" autoFocus
+            <input value={recipeName} onChange={(e) => setRecipeName(e.target.value)} placeholder="e.g. Spaghetti Bolognese"
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
           </div>
 
@@ -191,7 +191,7 @@ export default function RecipePanel({ cell, meal, mealPlanner, setMealPlanner, o
             {showPaste && (
               <div className="mb-3 bg-indigo-50 rounded-xl p-3 border border-indigo-100">
                 <p className="text-xs text-gray-500 mb-2">Paste ingredients — one per line (e.g. "400g pasta", "2 cups flour")</p>
-                <textarea value={pasteText} onChange={(e) => setPasteText(e.target.value)} rows={4} autoFocus
+                <textarea value={pasteText} onChange={(e) => setPasteText(e.target.value)} rows={4}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-white" />
                 <div className="flex gap-2 mt-2">
                   <button onClick={parsePaste} className="flex-1 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700">Parse & Add</button>
