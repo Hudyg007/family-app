@@ -3503,7 +3503,7 @@ export default function App() {
         <Sidebar active={active} setActive={setActive} collapsed={collapsed} setCollapsed={setCollapsed} pendingCount={pendingRequests.filter(r => r.status === "pending").length} />
 
         {/* Main column */}
-        <div style={{ flex:1, display:"flex", flexDirection:"column", minWidth:0, overflow:"hidden" }}>
+        <div style={{ flex:1, display:"flex", flexDirection:"column", minWidth:0, overflow:"hidden", background:"#ECEAF8" }}>
 
           {/* ── Header ── */}
           <div className="flex-shrink-0 backdrop-blur border-b px-4 md:px-6 flex items-center justify-between"
