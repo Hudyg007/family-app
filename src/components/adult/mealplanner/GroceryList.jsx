@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Plus, X, Check, Link, Loader } from "lucide-react";
 
@@ -35,6 +35,13 @@ function ImportModal({ onClose, onAdd }) {
   const [error,  setError]  = useState("");
   const [recipe, setRecipe] = useState(null);
   const [sel,    setSel]    = useState(new Set());
+
+  // Lock body scroll while modal is open so the page can't shift when keyboard opens
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
 
   const load = async () => {
     if (!url.trim()) return;
@@ -99,7 +106,6 @@ function ImportModal({ onClose, onAdd }) {
               placeholder="Paste recipe URL here…"
               style={{ flex:1, border:"1px solid #e5e7eb", borderRadius:12,
                        padding:"10px 12px", fontSize:14, outline:"none" }}
-              autoFocus
             />
             <button onClick={load} disabled={status === "loading" || !url.trim()}
               style={{ padding:"10px 16px", background:"#4f46e5", color:"#fff", border:"none",
