@@ -12,18 +12,18 @@
 
 html {
   height: 100%;
+  min-height: 100dvh;
   margin: 0;
   padding: 0;
-  /* Dark bg — any viewport bleed or safe-area gap shows dark (matches nav) */
-  background: #1E1B4B;
+  background: #ECEAF8;
 }
 
 body {
   height: 100%;
+  min-height: 100dvh;
   margin: 0;
   padding: 0;
-  /* Also dark — no white flash on rubber-band overscroll */
-  background: #1E1B4B;
+  background: #ECEAF8;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
@@ -32,10 +32,13 @@ body {
 }
 
 #root {
-  height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
   margin: 0;
   padding: 0;
-  background: #1E1B4B;
+  background: #ECEAF8;
+  display: flex;
+  flex-direction: column;
 }
 
 /* iOS input zoom prevention — 16px stops auto-zoom */

@@ -123,8 +123,24 @@ const INP = "w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:
 
 function Modal({ title, onClose, children }) {
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+    <div style={{
+      position:"fixed", top:0, left:0, right:0, bottom:0,
+      background:"rgba(0,0,0,0.4)",
+      display:"flex", alignItems:"center", justifyContent:"center",
+      zIndex:50,
+      paddingTop:"max(env(safe-area-inset-top), 16px)",
+      paddingBottom:"max(env(safe-area-inset-bottom), 16px)",
+      paddingLeft:16, paddingRight:16,
+      boxSizing:"border-box",
+    }}>
+      <div style={{
+        background:"white", borderRadius:20,
+        boxShadow:"0 20px 60px rgba(0,0,0,0.2)",
+        width:"100%", maxWidth:480,
+        maxHeight:"calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px)",
+        overflowY:"auto", WebkitOverflowScrolling:"touch",
+        padding:24, boxSizing:"border-box",
+      }}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-gray-800">{title}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1"><X size={20} /></button>
@@ -1965,8 +1981,23 @@ function SettingsModule({ members, setMembers, wallets, setWallets, onReset, iss
       </div>
       {mm && <MemberModal member={mm === "add" ? null : mm} onSave={saveMember} onClose={() => setMm(null)} />}
       {delC && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
+        <div style={{
+          position:"fixed", top:0, left:0, right:0, bottom:0,
+          background:"rgba(0,0,0,0.4)",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          zIndex:50,
+          paddingTop:"max(env(safe-area-inset-top), 16px)",
+          paddingBottom:"max(env(safe-area-inset-bottom), 16px)",
+          paddingLeft:16, paddingRight:16, boxSizing:"border-box",
+        }}>
+          <div style={{
+            background:"white", borderRadius:20,
+            boxShadow:"0 20px 60px rgba(0,0,0,0.2)",
+            width:"100%", maxWidth:384,
+            maxHeight:"calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px)",
+            overflowY:"auto", WebkitOverflowScrolling:"touch",
+            padding:24, textAlign:"center", boxSizing:"border-box",
+          }}>
             <AlertTriangle size={40} className="mx-auto text-red-400 mb-3" />
             <h2 className="text-lg font-bold text-gray-800 mb-1">Remove {delC.name}?</h2>
             <p className="text-sm text-gray-500 mb-5">This will also delete their wallet data. Cannot be undone.</p>
@@ -1978,8 +2009,23 @@ function SettingsModule({ members, setMembers, wallets, setWallets, onReset, iss
         </div>
       )}
       {confirmReset && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
+        <div style={{
+          position:"fixed", top:0, left:0, right:0, bottom:0,
+          background:"rgba(0,0,0,0.5)",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          zIndex:50,
+          paddingTop:"max(env(safe-area-inset-top), 16px)",
+          paddingBottom:"max(env(safe-area-inset-bottom), 16px)",
+          paddingLeft:16, paddingRight:16, boxSizing:"border-box",
+        }}>
+          <div style={{
+            background:"white", borderRadius:20,
+            boxShadow:"0 20px 60px rgba(0,0,0,0.2)",
+            width:"100%", maxWidth:384,
+            maxHeight:"calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px)",
+            overflowY:"auto", WebkitOverflowScrolling:"touch",
+            padding:24, textAlign:"center", boxSizing:"border-box",
+          }}>
             <div className="text-5xl mb-3">⚠️</div>
             <h2 className="text-lg font-bold text-gray-800 mb-1">Are you absolutely sure?</h2>
             <p className="text-sm text-gray-500 mb-5">All family data, events, wallets, and your account will be permanently deleted.</p>
@@ -2097,14 +2143,17 @@ function AppStyles() {
       *, *::before, *::after { box-sizing: border-box; }
       html {
         height: 100%;
-        height: -webkit-fill-available;
+        min-height: 100dvh;
         overflow: hidden;
         overscroll-behavior: none;
+        background: #ECEAF8;
       }
       body {
         height: 100%;
+        min-height: 100dvh;
         overflow: hidden;
         overscroll-behavior: none;
+        background: #ECEAF8;
         -webkit-tap-highlight-color: transparent;
         -webkit-text-size-adjust: 100%;
       }
@@ -2113,6 +2162,7 @@ function AppStyles() {
         min-height: -webkit-fill-available;
         display: flex;
         flex-direction: column;
+        background: #ECEAF8;
       }
 
       /* Prevent iOS zoom on input focus (needs font-size >= 16px) */
@@ -2225,8 +2275,23 @@ function IssueReportModal({ reporter, accountEmail, onSubmit, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+    <div style={{
+      position:"fixed", top:0, left:0, right:0, bottom:0,
+      background:"rgba(0,0,0,0.4)",
+      display:"flex", alignItems:"center", justifyContent:"center",
+      zIndex:50,
+      paddingTop:"max(env(safe-area-inset-top), 16px)",
+      paddingBottom:"max(env(safe-area-inset-bottom), 16px)",
+      paddingLeft:16, paddingRight:16, boxSizing:"border-box",
+    }}>
+      <div style={{
+        background:"white", borderRadius:24,
+        boxShadow:"0 20px 60px rgba(0,0,0,0.2)",
+        width:"100%", maxWidth:384,
+        maxHeight:"calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px)",
+        overflowY:"auto", WebkitOverflowScrolling:"touch",
+        overflow:"hidden",
+      }}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <h2 className="font-bold text-gray-800 flex items-center gap-2">🚩 Report an Issue</h2>
@@ -2370,7 +2435,7 @@ function FamilyMemberSelection({ members, onLogin, onSignOut, onSwitchAccount, o
             {/* Menu panel */}
             <div style={{
               position:"fixed",
-              top:72,
+              top:"calc(env(safe-area-inset-top) + 60px)",
               right:16,
               width:260,
               background:"#ffffff",
@@ -2447,8 +2512,23 @@ function FamilyMemberSelection({ members, onLogin, onSignOut, onSwitchAccount, o
 
         {/* Delete account — step 1: warning */}
         {deleteStep === 1 && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
+          <div style={{
+            position:"fixed", top:0, left:0, right:0, bottom:0,
+            background:"rgba(0,0,0,0.5)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            zIndex:50,
+            paddingTop:"max(env(safe-area-inset-top), 16px)",
+            paddingBottom:"max(env(safe-area-inset-bottom), 16px)",
+            paddingLeft:16, paddingRight:16, boxSizing:"border-box",
+          }}>
+            <div style={{
+              background:"white", borderRadius:24,
+              boxShadow:"0 20px 60px rgba(0,0,0,0.2)",
+              width:"100%", maxWidth:384,
+              maxHeight:"calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px)",
+              overflowY:"auto", WebkitOverflowScrolling:"touch",
+              padding:24, boxSizing:"border-box",
+            }}>
               <div className="text-4xl text-center mb-3">⚠️</div>
               <h3 className="font-bold text-gray-800 text-center mb-2">Delete Account?</h3>
               <p className="text-sm text-gray-500 text-center mb-6">
@@ -2464,8 +2544,23 @@ function FamilyMemberSelection({ members, onLogin, onSignOut, onSwitchAccount, o
 
         {/* Delete account — step 2: type DELETE to confirm */}
         {deleteStep === 2 && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
+          <div style={{
+            position:"fixed", top:0, left:0, right:0, bottom:0,
+            background:"rgba(0,0,0,0.5)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            zIndex:50,
+            paddingTop:"max(env(safe-area-inset-top), 16px)",
+            paddingBottom:"max(env(safe-area-inset-bottom), 16px)",
+            paddingLeft:16, paddingRight:16, boxSizing:"border-box",
+          }}>
+            <div style={{
+              background:"white", borderRadius:24,
+              boxShadow:"0 20px 60px rgba(0,0,0,0.2)",
+              width:"100%", maxWidth:384,
+              maxHeight:"calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px)",
+              overflowY:"auto", WebkitOverflowScrolling:"touch",
+              padding:24, boxSizing:"border-box",
+            }}>
               <h3 className="font-bold text-gray-800 mb-2">Final Confirmation</h3>
               <p className="text-sm text-gray-500 mb-4">Type <strong>DELETE</strong> below to permanently erase this account.</p>
               <input
@@ -2723,8 +2818,21 @@ function KidDay({ events, kid, pendingRequests, setPendingRequests }) {
 
       {/* Request event sheet */}
       {showReq && (
-        <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50">
-          <div className="bg-white rounded-t-3xl w-full max-w-sm p-6 pb-8 fadeUp">
+        <div style={{
+          position:"fixed", top:0, left:0, right:0, bottom:0,
+          background:"rgba(0,0,0,0.4)",
+          display:"flex", alignItems:"flex-end", justifyContent:"center",
+          zIndex:50,
+        }}>
+          <div className="fadeUp" style={{
+            background:"white", borderRadius:"24px 24px 0 0",
+            width:"100%", maxWidth:384,
+            padding:24,
+            paddingBottom:"calc(env(safe-area-inset-bottom) + 24px)",
+            maxHeight:"calc(100dvh - env(safe-area-inset-top) - 60px)",
+            overflowY:"auto", WebkitOverflowScrolling:"touch",
+            boxSizing:"border-box",
+          }}>
             {sent
               ? <div className="text-center py-6"><div className="text-5xl mb-2">🎉</div><p className="font-bold text-gray-800">Request sent!</p><p className="text-sm text-gray-400 mt-1">A parent will review it soon.</p></div>
               : <>
@@ -3040,8 +3148,21 @@ function KidGoalsView({ goals, setGoals, wallets, kid }) {
 
       {/* New goal sheet */}
       {showNew && (
-        <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50">
-          <div className="bg-white rounded-t-3xl w-full max-w-sm p-6 pb-8 fadeUp">
+        <div style={{
+          position:"fixed", top:0, left:0, right:0, bottom:0,
+          background:"rgba(0,0,0,0.4)",
+          display:"flex", alignItems:"flex-end", justifyContent:"center",
+          zIndex:50,
+        }}>
+          <div className="fadeUp" style={{
+            background:"white", borderRadius:"24px 24px 0 0",
+            width:"100%", maxWidth:384,
+            padding:24,
+            paddingBottom:"calc(env(safe-area-inset-bottom) + 24px)",
+            maxHeight:"calc(100dvh - env(safe-area-inset-top) - 60px)",
+            overflowY:"auto", WebkitOverflowScrolling:"touch",
+            boxSizing:"border-box",
+          }}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-lg font-bold text-gray-800">New Savings Goal</h3>
               <button onClick={() => setShowNew(false)} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
@@ -3375,7 +3496,7 @@ export default function App() {
         position:"fixed", top:0, left:0, right:0, bottom:0,
         width:"100%", height:"100dvh",
         overflow:"hidden",
-        background:"#1E1B4B", fontFamily:"'Inter',system-ui,sans-serif",
+        background:"#ECEAF8", fontFamily:"'Inter',system-ui,sans-serif",
         display:"flex",
       }}>
         <Sidebar active={active} setActive={setActive} collapsed={collapsed} setCollapsed={setCollapsed} pendingCount={pendingRequests.filter(r => r.status === "pending").length} />

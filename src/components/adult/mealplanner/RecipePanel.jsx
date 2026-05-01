@@ -108,13 +108,13 @@ export default function RecipePanel({ cell, meal, mealPlanner, setMealPlanner, o
   const fmtDate = (d) => new Date(d + "T00:00:00").toLocaleDateString("en-US", { weekday:"long", month:"short", day:"numeric" });
 
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <div style={{ position:"fixed", top:0, left:0, right:0, bottom:0, zIndex:50, display:"flex" }}>
       {/* Backdrop */}
-      <div className="flex-1 bg-black/30" onClick={onClose} />
+      <div style={{ flex:1, background:"rgba(0,0,0,0.3)" }} onClick={onClose} />
       {/* Panel */}
-      <div className="w-full max-w-md bg-white shadow-2xl flex flex-col overflow-hidden">
+      <div style={{ width:"100%", maxWidth:448, background:"white", boxShadow:"0 0 40px rgba(0,0,0,0.2)", display:"flex", flexDirection:"column", overflow:"hidden" }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 20px 16px", paddingTop:"calc(env(safe-area-inset-top) + 16px)", borderBottom:"1px solid #f3f4f6", flexShrink:0 }}>
           <div>
             <p className="text-xs font-bold text-indigo-500 uppercase tracking-wide">{cell.mealType}</p>
             <h2 className="font-bold text-gray-800 text-sm">{fmtDate(cell.date)}</h2>
