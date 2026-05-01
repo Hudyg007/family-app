@@ -15,7 +15,8 @@ html {
   min-height: 100dvh;
   margin: 0;
   padding: 0;
-  background: #ECEAF8;
+  /* Dark — matches the nav bar so the safe-area zone below it is always dark */
+  background: #1E1B4B;
 }
 
 body {
@@ -23,7 +24,8 @@ body {
   min-height: 100dvh;
   margin: 0;
   padding: 0;
-  background: #ECEAF8;
+  /* Dark — matches the nav bar so the safe-area zone below it is always dark */
+  background: #1E1B4B;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
@@ -36,7 +38,8 @@ body {
   min-height: -webkit-fill-available;
   margin: 0;
   padding: 0;
-  background: #ECEAF8;
+  /* #root is covered by the fixed shell, so its bg doesn't show — keep dark as fallback */
+  background: #1E1B4B;
   display: flex;
   flex-direction: column;
 }

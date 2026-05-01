@@ -2146,14 +2146,15 @@ function AppStyles() {
         min-height: 100dvh;
         overflow: hidden;
         overscroll-behavior: none;
-        background: #ECEAF8;
+        /* Dark — matches nav bar so the bottom safe-area zone is always dark */
+        background: #1E1B4B;
       }
       body {
         height: 100%;
         min-height: 100dvh;
         overflow: hidden;
         overscroll-behavior: none;
-        background: #ECEAF8;
+        background: #1E1B4B;
         -webkit-tap-highlight-color: transparent;
         -webkit-text-size-adjust: 100%;
       }
@@ -2162,7 +2163,7 @@ function AppStyles() {
         min-height: -webkit-fill-available;
         display: flex;
         flex-direction: column;
-        background: #ECEAF8;
+        background: #1E1B4B;
       }
 
       /* Prevent iOS zoom on input focus (needs font-size >= 16px) */
