@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo, createContext, useContext, useRef } from "react";
+import React, { useState, useEffect, useMemo, useCallback, createContext, useContext, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Calendar, CheckSquare, ShoppingCart, Wallet, Target, Settings,
   ChevronLeft, ChevronRight, Plus, X, Check, Star, TrendingUp,
   Home, Bell, Lock, Trash2, DollarSign, ArrowUpCircle, Repeat,
   Edit3, BarChart2, User, Save, UserPlus, AlertTriangle,
-  Utensils, MoreVertical } from "lucide-react";
+  Utensils, MoreVertical, Clock } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell } from "recharts";
 import { useAuth, LS_DATA, getDataKey } from "./src/contexts/AuthContext.jsx";
@@ -93,6 +93,7 @@ const NAV = [
   { id:"wallet",   icon:Wallet,      label:"Wallet"    },
   { id:"goals",    icon:Target,      label:"Goals"     },
   { id:"budget",   icon:BarChart2,   label:"Budget"    },
+  { id:"activity", icon:Clock,       label:"Activity"  },
   { id:"settings", icon:Settings,    label:"Settings"  },
 ];
 
@@ -541,7 +542,7 @@ function WeekView({ wdays, evC, setModal }) {
 }
 
 function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests }) {
-  const { members, getColor } = useFamily();
+  const { members, getColor, logActivity } = useFamily();
   const [view, setView] = useState("month");
   const [cur, setCur] = useState(new Date());
   const [modal, setModal] = useState(null);
@@ -570,8 +571,13 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
   });
 
   const saveEvt = form => {
-    if (modal?.mode === "edit") setEvents(prev => prev.map(e => e.id === form.id ? form : e));
-    else setEvents(prev => [...prev, { ...form, id:uid() }]);
+    if (modal?.mode === "edit") {
+      setEvents(prev => prev.map(e => e.id === form.id ? form : e));
+      logActivity?.("calendar", "Edited event", `"${form.title}" on ${fmtDate(form.date)}`);
+    } else {
+      setEvents(prev => [...prev, { ...form, id:uid() }]);
+      logActivity?.("calendar", "Added event", `"${form.title}" on ${fmtDate(form.date)}`);
+    }
     setModal(null);
   };
 
@@ -687,7 +693,7 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
                           </div>
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button onClick={() => setModal({ mode:"edit", evt:ev })} className="p-1 text-gray-400 hover:text-indigo-500"><Edit3 size={13} /></button>
-                            <button onClick={() => setEvents(prev => prev.filter(e => e.id !== ev.id))} className="p-1 text-gray-400 hover:text-red-400"><X size={13} /></button>
+                            <button onClick={() => { setEvents(prev => prev.filter(e => e.id !== ev.id)); logActivity?.("calendar", "Deleted event", `"${ev.title}" on ${fmtDate(ev.date)}`); }} className="p-1 text-gray-400 hover:text-red-400"><X size={13} /></button>
                           </div>
                         </div>
                       );
@@ -824,7 +830,7 @@ function ChoreModal({ chore, title, onSave, onClose }) {
 }
 
 function ChoresModule({ chores, setChores, wallets, setWallets }) {
-  const { members, getColor } = useFamily();
+  const { members, getColor, logActivity } = useFamily();
   const kids = members.filter(m => m.role === "child");
   const [filter, setFilter] = useState("all");
   const [modal, setModal] = useState(null);
@@ -840,8 +846,8 @@ function ChoresModule({ chores, setChores, wallets, setWallets }) {
     if (c.id !== id) return c;
     const required = c.timesRequired || 1;
     const completions = c.completions || 0;
+    const kid = members.find(m => m.id === c.assignee);
     if (completions < required) {
-      // Add one completion; pay reward each time
       const newCount = completions + 1;
       setWallets(w => ({
         ...w,
@@ -851,9 +857,11 @@ function ChoresModule({ chores, setChores, wallets, setWallets }) {
           history: [...(w[c.assignee]?.history || []), { date:ds(Y,M,D), amount:c.reward, type:"chore", desc:`Chore: ${c.title}${required > 1 ? ` (${newCount}/${required})` : ""}` }],
         },
       }));
+      if (newCount >= required) {
+        logActivity?.("chores", "Completed chore", `"${c.title}" by ${kid?.name || "?"}${c.reward > 0 ? ` — +${fmtMoney(c.reward)}` : ""}`, { amount:c.reward, target:kid?.name });
+      }
       return { ...c, completions: newCount, done: newCount >= required };
     } else {
-      // Undo — reset completions
       return { ...c, completions: 0, done: false };
     }
   }));
@@ -1147,7 +1155,7 @@ function AllowanceModal({ initial, memberId, memberName, onSave, onClose }) {
 
 /* ── WALLET ─────────────────────────────────────────────────────────────── */
 function WalletModule({ wallets, setWallets, allowances, setAllowances }) {
-  const { members, getColor } = useFamily();
+  const { members, getColor, logActivity } = useFamily();
   const kids = members.filter(m => m.role === "child");
   const [selId, setSelId] = useState(() => kids[0]?.id || "");
   const [showBoost, setShowBoost] = useState(false);
@@ -1175,18 +1183,21 @@ function WalletModule({ wallets, setWallets, allowances, setAllowances }) {
     const a = parseFloat(bAmt) || 0;
     if (a <= 0) return;
     upd({ [bPot]: (w[bPot] || 0) + a, history: [...w.history, { date:ds(Y,M,D), amount:a, type:"boost", desc:bNote || "Parent Boost 🌟" }] });
+    logActivity?.("wallet", "Boosted wallet", `+${fmtMoney(a)} to ${m?.name}'s ${bPot}${bNote ? ` — "${bNote}"` : ""}`, { amount:a, target:m?.name });
     setShowBoost(false); setBAmt("5"); setBNote("");
   };
   const xfer = () => {
     const a = parseFloat(tfAmt) || 0;
     if (a <= 0 || tfFrom === tfTo || (w[tfFrom] || 0) < a) return;
     upd({ [tfFrom]: (w[tfFrom] || 0) - a, [tfTo]: (w[tfTo] || 0) + a, history: [...w.history, { date:ds(Y,M,D), amount:0, type:"transfer", desc:`Moved ${fmtMoney(a)} ${tfFrom}→${tfTo}` }] });
+    logActivity?.("wallet", "Transferred funds", `${m?.name}: ${fmtMoney(a)} ${tfFrom} → ${tfTo}`, { amount:a, target:m?.name });
     setShowTf(false); setTfAmt("");
   };
   const adj = () => {
     const a = parseFloat(adjAmt) || 0;
     if (a === 0) return;
     upd({ [adjPot]: (w[adjPot] || 0) + a, history: [...w.history, { date:ds(Y,M,D), amount:a, type:"adjust", desc:`Manual adjustment (${adjPot})` }] });
+    logActivity?.("wallet", "Adjusted balance", `${m?.name}'s ${adjPot}: ${a > 0 ? "+" : ""}${fmtMoney(a)}`, { amount:a, target:m?.name });
     setAdjPot(null); setAdjAmt("");
   };
 
@@ -1682,6 +1693,97 @@ function MemberModal({ member, onSave, onClose }) {
         <button onClick={save} style={{ background:p.bg }} className="flex-1 py-2.5 text-white rounded-xl text-sm font-medium hover:opacity-90">Save</button>
       </div>
     </Modal>
+  );
+}
+
+/* ── ACTIVITY LOG ────────────────────────────────────────────────────────── */
+const CATEGORY_META = {
+  calendar: { label:"Calendar", emoji:"📅", color:"#6366F1", bg:"#EEF2FF" },
+  wallet:   { label:"Wallet",   emoji:"💰", color:"#F59E0B", bg:"#FFFBEB" },
+  chores:   { label:"Chores",   emoji:"✅", color:"#10B981", bg:"#ECFDF5" },
+};
+
+function ActivityLogModule({ activityLog, onClear }) {
+  const [filter, setFilter] = useState("all");
+  const shown = filter === "all" ? activityLog : activityLog.filter(e => e.category === filter);
+
+  const fmtTs = iso => {
+    const d = new Date(iso);
+    const today = new Date();
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+    const isToday = d.toDateString() === today.toDateString();
+    const isYest  = d.toDateString() === yesterday.toDateString();
+    const timeStr = d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+    if (isToday)    return `Today ${timeStr}`;
+    if (isYest)     return `Yesterday ${timeStr}`;
+    return d.toLocaleDateString("en-US", { month:"short", day:"numeric" }) + " " + timeStr;
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <PageHeader title="Activity Log" subtitle="Who changed what and when" />
+        {activityLog.length > 0 && (
+          <button onClick={onClear} className="text-xs text-red-400 hover:text-red-600 font-medium">Clear all</button>
+        )}
+      </div>
+
+      {/* Filter pills */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {["all", "calendar", "wallet", "chores"].map(f => {
+          const meta = CATEGORY_META[f];
+          const active = filter === f;
+          return (
+            <button key={f} onClick={() => setFilter(f)}
+              className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+              style={active
+                ? { background: meta?.color || "#1E1B4B", color:"white" }
+                : { background:"#F3F4F6", color:"#6B7280" }}>
+              {meta ? `${meta.emoji} ${meta.label}` : "All"}
+            </button>
+          );
+        })}
+      </div>
+
+      {shown.length === 0 ? (
+        <div className="text-center py-20 text-gray-400">
+          <Clock size={40} className="mx-auto mb-3 opacity-30" />
+          <p className="font-medium">No activity yet</p>
+          <p className="text-sm mt-1">Actions in Calendar, Wallet, and Chores will appear here.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {shown.map(entry => {
+            const meta = CATEGORY_META[entry.category] || CATEGORY_META.calendar;
+            return (
+              <div key={entry.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-start gap-3">
+                {/* Category badge */}
+                <div className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-base"
+                  style={{ background: meta.bg }}>
+                  {meta.emoji}
+                </div>
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm text-gray-800">{entry.action}</span>
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full"
+                      style={{ background: meta.bg, color: meta.color }}>
+                      {meta.label}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-0.5 truncate">{entry.detail}</p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="text-lg leading-none">{entry.actor?.avatar || "👤"}</span>
+                    <span className="text-xs font-semibold text-gray-500">{entry.actor?.name}</span>
+                    <span className="text-xs text-gray-400">· {fmtTs(entry.ts)}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -3055,6 +3157,7 @@ export default function App() {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [notifications,   setNotifications]   = useState([]);
   const [issueReports,    setIssueReports]    = useState([]);
+  const [activityLog,     setActivityLog]     = useState([]);
   const [reportOpen,      setReportOpen]      = useState(false);
   const [headerMenuOpen,  setHeaderMenuOpen]  = useState(false);
   const avatarBtnRef = useRef(null);
@@ -3077,6 +3180,7 @@ export default function App() {
       if (d.notifications)   setNotifications(d.notifications);
       if (d.mealPlanner)   setMealPlanner(p => ({ ...p, ...d.mealPlanner }));
       if (d.issueReports)  setIssueReports(d.issueReports);
+      if (d.activityLog)   setActivityLog(d.activityLog);
       // Process any due recurring payments on load
       const today = ds(Y, M, D);
       const rawAllowances = d.allowances || [];
@@ -3119,15 +3223,30 @@ export default function App() {
   /* Persist all state changes back to localStorage (only once data is loaded) */
   useEffect(() => {
     if (members.length === 0) return; // skip before data is loaded
-    const payload = { members, events, chores, lists, wallets, goals, budget, allowances, mealPlanner, pendingRequests, notifications, issueReports };
+    const payload = { members, events, chores, lists, wallets, goals, budget, allowances, mealPlanner, pendingRequests, notifications, issueReports, activityLog };
     localStorage.setItem(DATA_KEY, JSON.stringify(payload));
     // Debounced cloud sync — fires 3 seconds after last change to avoid spamming
     const t = setTimeout(() => pushFamilyToCloud(account?.email, payload), 3000);
     return () => clearTimeout(t);
-  }, [members, events, chores, lists, wallets, goals, budget, allowances, mealPlanner, pendingRequests, notifications, issueReports]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [members, events, chores, lists, wallets, goals, budget, allowances, mealPlanner, pendingRequests, notifications, issueReports, activityLog]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getColor = id => { const m = members.find(x => x.id === id); return m ? getP(m.colorKey) : null; };
-  const ctx = useMemo(() => ({ members, getColor, notifications, setNotifications }), [members, notifications, setNotifications]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* Append an entry to the activity log */
+  const logActivity = useCallback((category, action, detail, extra = {}) => {
+    if (!currentUser) return;
+    setActivityLog(prev => [{
+      id: uid(),
+      ts: new Date().toISOString(),
+      actor: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar },
+      category,   // "calendar" | "wallet" | "chores"
+      action,     // short verb, e.g. "Added event"
+      detail,     // description string
+      ...extra,   // optional: amount, target
+    }, ...prev].slice(0, 200)); // cap at 200 entries
+  }, [currentUser]);
+
+  const ctx = useMemo(() => ({ members, getColor, notifications, setNotifications, logActivity, currentUser }), [members, notifications, setNotifications, logActivity, currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Account-level sign out (back to login screen) */
   const handleSignOut = () => {
@@ -3242,6 +3361,7 @@ export default function App() {
     if (active === "goals")    return <GoalsModule    goals={goals}     setGoals={setGoals}     wallets={wallets} setWallets={setWallets} />;
     if (active === "budget")   return <BudgetModule   budget={budget}   setBudget={setBudget} />;
     if (active === "meals")    return <MealPlannerTab mealPlanner={mealPlanner} setMealPlanner={setMealPlanner} />;
+    if (active === "activity") return <ActivityLogModule activityLog={activityLog} onClear={() => setActivityLog([])} />;
     if (active === "settings") return <SettingsModule members={members} setMembers={setMembers} wallets={wallets} setWallets={setWallets} onReset={handleReset} issueReports={issueReports} setIssueReports={setIssueReports} />;
     return <Dashboard events={events} chores={chores} wallets={wallets} />;
   };
