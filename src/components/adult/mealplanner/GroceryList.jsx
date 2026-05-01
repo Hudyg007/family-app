@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Plus, X, Check, Link, Loader } from "lucide-react";
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -61,39 +62,59 @@ function ImportModal({ onClose, onAdd }) {
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 p-0">
-      <div className="bg-white w-full max-w-lg rounded-t-3xl shadow-2xl flex flex-col"
-           style={{ maxHeight:"85vh" }}>
+  return createPortal(
+    /* Backdrop — z-[350] sits above nav (100) and More sheet (200) */
+    <div
+      style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.55)",
+               display:"flex", alignItems:"flex-end", justifyContent:"center",
+               zIndex: 350 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div style={{ background:"#fff", width:"100%", maxWidth:520,
+                    borderRadius:"24px 24px 0 0", boxShadow:"0 -4px 40px rgba(0,0,0,0.18)",
+                    display:"flex", flexDirection:"column",
+                    maxHeight:"88vh",
+                    paddingBottom:"env(safe-area-inset-bottom)" }}>
+
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 flex-shrink-0">
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
+                      padding:"20px 20px 12px", borderBottom:"1px solid #f1f1f1", flexShrink:0 }}>
           <div>
-            <h2 className="font-bold text-gray-800 text-base">Import from Recipe URL</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Works with AllRecipes, Food Network, NYT Cooking & more</p>
+            <p style={{ fontWeight:700, color:"#1f2937", fontSize:15, margin:0 }}>Import from Recipe URL</p>
+            <p style={{ fontSize:12, color:"#9ca3af", marginTop:2 }}>Works with AllRecipes, Food Network, NYT Cooking & more</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1"><X size={20} /></button>
+          <button onClick={onClose}
+            style={{ background:"none", border:"none", cursor:"pointer", color:"#9ca3af", padding:4, display:"flex" }}>
+            <X size={20} />
+          </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          {/* URL input */}
-          <div className="flex gap-2 mb-4">
+        {/* Scrollable body */}
+        <div style={{ flex:1, overflowY:"auto", padding:"16px 20px" }}>
+          {/* URL input row */}
+          <div style={{ display:"flex", gap:8, marginBottom:16 }}>
             <input
               value={url} onChange={e => setUrl(e.target.value)}
               onKeyDown={e => e.key === "Enter" && load()}
               placeholder="Paste recipe URL here…"
-              className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              style={{ flex:1, border:"1px solid #e5e7eb", borderRadius:12,
+                       padding:"10px 12px", fontSize:14, outline:"none" }}
               autoFocus
             />
             <button onClick={load} disabled={status === "loading" || !url.trim()}
-              className="px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors flex-shrink-0 flex items-center gap-1.5">
-              {status === "loading" ? <Loader size={15} className="animate-spin" /> : <Link size={15} />}
+              style={{ padding:"10px 16px", background:"#4f46e5", color:"#fff", border:"none",
+                       borderRadius:12, fontSize:13, fontWeight:600, cursor:"pointer",
+                       opacity: (status === "loading" || !url.trim()) ? 0.5 : 1,
+                       display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
+              {status === "loading" ? <Loader size={15} style={{ animation:"spin 1s linear infinite" }} /> : <Link size={15} />}
               {status === "loading" ? "Fetching…" : "Fetch"}
             </button>
           </div>
 
           {/* Error */}
           {status === "error" && (
-            <div className="bg-red-50 border border-red-100 rounded-xl p-3 text-sm text-red-600 mb-4">
+            <div style={{ background:"#fef2f2", border:"1px solid #fecaca", borderRadius:12,
+                          padding:"12px 14px", fontSize:13, color:"#dc2626", marginBottom:16 }}>
               {error}
             </div>
           )}
@@ -101,21 +122,33 @@ function ImportModal({ onClose, onAdd }) {
           {/* Preview */}
           {status === "preview" && recipe && (
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <p className="font-semibold text-gray-700 text-sm">
-                  {recipe.name && <span className="text-indigo-600">"{recipe.name}"</span>} — {recipe.ingredients.length} ingredients found
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+                <p style={{ fontSize:13, fontWeight:600, color:"#374151", margin:0 }}>
+                  {recipe.name && <span style={{ color:"#4f46e5" }}>"{recipe.name}"</span>}
+                  {" "}— {recipe.ingredients.length} ingredients found
                 </p>
-                <button onClick={() => setSel(sel.size === recipe.ingredients.length ? new Set() : new Set(recipe.ingredients.map((_, i) => i)))}
-                  className="text-xs text-indigo-500 font-medium hover:text-indigo-700">
+                <button
+                  onClick={() => setSel(sel.size === recipe.ingredients.length
+                    ? new Set()
+                    : new Set(recipe.ingredients.map((_, i) => i)))}
+                  style={{ background:"none", border:"none", cursor:"pointer",
+                           fontSize:12, color:"#6366f1", fontWeight:600 }}>
                   {sel.size === recipe.ingredients.length ? "Deselect all" : "Select all"}
                 </button>
               </div>
-              <div className="space-y-1.5">
+              <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
                 {recipe.ingredients.map((ing, i) => (
                   <button key={i} onClick={() => toggle(i)}
-                    className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-sm ${sel.has(i) ? "border-indigo-300 bg-indigo-50 text-indigo-800" : "border-gray-100 bg-gray-50 text-gray-500"}`}>
-                    <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border-2 transition-all ${sel.has(i) ? "bg-indigo-500 border-indigo-500" : "border-gray-300"}`}>
-                      {sel.has(i) && <Check size={10} className="text-white" />}
+                    style={{ width:"100%", textAlign:"left", display:"flex", alignItems:"center",
+                             gap:10, padding:"10px 12px", borderRadius:12, border:"none", cursor:"pointer",
+                             fontSize:13, transition:"all 0.15s",
+                             background: sel.has(i) ? "#eef2ff" : "#f9fafb",
+                             color: sel.has(i) ? "#3730a3" : "#6b7280" }}>
+                    <div style={{ width:16, height:16, borderRadius:4, flexShrink:0,
+                                  border: sel.has(i) ? "2px solid #6366f1" : "2px solid #d1d5db",
+                                  background: sel.has(i) ? "#6366f1" : "transparent",
+                                  display:"flex", alignItems:"center", justifyContent:"center" }}>
+                      {sel.has(i) && <Check size={10} color="#fff" />}
                     </div>
                     {ing}
                   </button>
@@ -125,17 +158,21 @@ function ImportModal({ onClose, onAdd }) {
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer confirm button */}
         {status === "preview" && (
-          <div className="px-5 py-4 border-t border-gray-100 flex-shrink-0">
+          <div style={{ padding:"12px 20px 16px", borderTop:"1px solid #f1f1f1", flexShrink:0 }}>
             <button onClick={confirm} disabled={sel.size === 0}
-              className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+              style={{ width:"100%", padding:"14px 0", background:"#4f46e5", color:"#fff",
+                       border:"none", borderRadius:14, fontSize:14, fontWeight:700,
+                       cursor: sel.size === 0 ? "not-allowed" : "pointer",
+                       opacity: sel.size === 0 ? 0.5 : 1 }}>
               Add {sel.size} ingredient{sel.size !== 1 ? "s" : ""} to Grocery List
             </button>
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -186,15 +223,11 @@ export default function GroceryList({ mealPlanner, setMealPlanner }) {
   };
 
   const addFromUrl = (ingredients, recipeName) => {
-    const newItems = ingredients.map(raw => {
-      // raw is a full ingredient string like "2 cups flour, sifted"
-      // just store the whole string as the name
-      return {
-        id: uid(), name: raw, quantity: "", unit: "",
-        checked: false, category: categorize(raw),
-        sources: recipeName ? [recipeName] : [],
-      };
-    });
+    const newItems = ingredients.map(raw => ({
+      id: uid(), name: raw, quantity: "", unit: "",
+      checked: false, category: categorize(raw),
+      sources: recipeName ? [recipeName] : [],
+    }));
     setMealPlanner(p => ({ ...p, groceryList: [...p.groceryList, ...newItems] }));
   };
 
@@ -251,7 +284,7 @@ export default function GroceryList({ mealPlanner, setMealPlanner }) {
         <div className="text-center py-12 text-gray-400">
           <div className="text-5xl mb-3">🛒</div>
           <p className="font-medium text-gray-500">Your grocery list is empty</p>
-          <p className="text-xs mt-1">Add ingredients when saving recipes to the meal planner</p>
+          <p className="text-xs mt-1">Add items manually or import from a recipe URL</p>
         </div>
       )}
 
@@ -292,21 +325,38 @@ export default function GroceryList({ mealPlanner, setMealPlanner }) {
         </div>
       ))}
 
-      {/* Import modal */}
+      {/* Import modal — rendered via portal so it floats above the nav bar */}
       {importOpen && <ImportModal onClose={() => setImportOpen(false)} onAdd={addFromUrl} />}
 
-      {/* Clear all confirmation */}
-      {clearAllConfirm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 shadow-xl w-full max-w-xs">
-            <p className="font-bold text-gray-800 mb-1">Clear entire list?</p>
-            <p className="text-sm text-gray-500 mb-4">This removes all {totalCount} items and cannot be undone.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setClearAllConfirm(false)} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-              <button onClick={clearAll} className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700">Clear All</button>
+      {/* Clear all confirmation — also via portal */}
+      {clearAllConfirm && createPortal(
+        <div
+          style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.45)",
+                   display:"flex", alignItems:"center", justifyContent:"center",
+                   zIndex: 350, padding:16 }}
+          onClick={e => { if (e.target === e.currentTarget) setClearAllConfirm(false); }}
+        >
+          <div style={{ background:"#fff", borderRadius:20, padding:24,
+                        boxShadow:"0 8px 40px rgba(0,0,0,0.18)", width:"100%", maxWidth:300 }}>
+            <p style={{ fontWeight:700, color:"#1f2937", fontSize:15, margin:"0 0 6px" }}>Clear entire list?</p>
+            <p style={{ fontSize:13, color:"#6b7280", margin:"0 0 20px" }}>
+              This removes all {totalCount} items and cannot be undone.
+            </p>
+            <div style={{ display:"flex", gap:10 }}>
+              <button onClick={() => setClearAllConfirm(false)}
+                style={{ flex:1, padding:"11px 0", border:"1px solid #e5e7eb", borderRadius:12,
+                         fontSize:13, color:"#374151", background:"#fff", cursor:"pointer" }}>
+                Cancel
+              </button>
+              <button onClick={clearAll}
+                style={{ flex:1, padding:"11px 0", background:"#dc2626", color:"#fff",
+                         border:"none", borderRadius:12, fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                Clear All
+              </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
