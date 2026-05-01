@@ -17,7 +17,7 @@ import LoginScreenAuth     from "./src/components/auth/LoginScreen.jsx";
 import ForgotPassword      from "./src/components/auth/ForgotPassword.jsx";
 import OnboardingWizard    from "./src/components/onboarding/OnboardingWizard.jsx";
 import { sendIssueReport }   from "./src/lib/emailService.js";
-import { pushFamilyToCloud } from "./src/lib/cloudSync.js";
+import { pushFamilyToCloud, pullFromCloud } from "./src/lib/cloudSync.js";
 import {
   initTokenClient, requestAccess, disconnect as gcalDisconnect,
   isConnected as gcalIsConnected, fetchGoogleEvents, createGoogleEvent,
@@ -3423,10 +3423,8 @@ export default function App() {
   /* Load/reload family data whenever we land on the family-select screen */
   useEffect(() => {
     if (screen !== "family-select") return;
-    try {
-      // Try namespaced key first, fall back to legacy key for migration
-      const raw = localStorage.getItem(DATA_KEY) || localStorage.getItem(LS_DATA);
-      const d = JSON.parse(raw);
+
+    const applyData = (d) => {
       if (!d) return;
       if (d.members) setMembers(d.members);
       if (d.events)  setEvents(d.events);
@@ -3439,7 +3437,6 @@ export default function App() {
       if (d.mealPlanner)   setMealPlanner(p => ({ ...p, ...d.mealPlanner }));
       if (d.issueReports)  setIssueReports(d.issueReports);
       if (d.activityLog)   setActivityLog(d.activityLog);
-      // Process any due recurring payments on load
       const today = ds(Y, M, D);
       const rawAllowances = d.allowances || [];
       const rawWallets    = d.wallets    || {};
@@ -3475,7 +3472,20 @@ export default function App() {
         if (d.allowances) setAllowances(d.allowances);
         if (d.wallets)    setWallets(d.wallets);
       }
+    };
+
+    // Load local data first for instant display
+    try {
+      const raw = localStorage.getItem(DATA_KEY) || localStorage.getItem(LS_DATA);
+      const d = JSON.parse(raw);
+      if (d) applyData(d);
     } catch {}
+
+    // Always pull from cloud too — overwrites local with latest (covers new devices + cross-device changes)
+    pullFromCloud(account?.email).then(cloud => {
+      if (cloud?.familyJson) applyData(cloud.familyJson);
+    }).catch(() => {});
+
   }, [screen]);
 
   /* Persist all state changes back to localStorage (only once data is loaded) */
