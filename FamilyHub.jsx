@@ -18,6 +18,11 @@ import ForgotPassword      from "./src/components/auth/ForgotPassword.jsx";
 import OnboardingWizard    from "./src/components/onboarding/OnboardingWizard.jsx";
 import { sendIssueReport }   from "./src/lib/emailService.js";
 import { pushFamilyToCloud } from "./src/lib/cloudSync.js";
+import {
+  initTokenClient, requestAccess, disconnect as gcalDisconnect,
+  isConnected as gcalIsConnected, fetchGoogleEvents, createGoogleEvent,
+  updateGoogleEvent, deleteGoogleEvent, fromGoogleEvent, GCAL_CLIENT_ID,
+} from "./src/lib/googleCalendar.js";
 /* ── MEMBER AVATAR HELPER ────────────────────────────────────────────────── */
 function MemberAvatar({ member, size = 44, style: extraStyle = {} }) {
   if (!member) return null;
@@ -565,6 +570,60 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
   const [modal, setModal] = useState(null);
   const [filter, setFilter] = useState("all");
 
+  // ── Google Calendar state ──────────────────────────────────────────────
+  const [gcalConnected, setGcalConnected] = useState(() => gcalIsConnected());
+  const [gcalSyncing,   setGcalSyncing]   = useState(false);
+  const [gcalError,     setGcalError]     = useState(null);
+  const gcalPlaceholder = GCAL_CLIENT_ID.startsWith("YOUR_GOOGLE");
+
+  // Initialise GIS token client on mount
+  useEffect(() => {
+    if (gcalPlaceholder) return;
+    initTokenClient((connected) => setGcalConnected(connected));
+  }, []);
+
+  // Pull Google Calendar events into the app
+  const syncFromGoogle = async () => {
+    if (!gcalConnected) return;
+    setGcalSyncing(true);
+    setGcalError(null);
+    try {
+      const gEvents = await fetchGoogleEvents();
+      const incoming = gEvents.map(fromGoogleEvent);
+      setEvents(prev => {
+        // Remove stale Google events, then add fresh ones
+        const local = prev.filter(e => !e.fromGoogle);
+        return [...local, ...incoming];
+      });
+    } catch (e) {
+      setGcalError(e.message);
+      if (e.message.includes("token expired")) setGcalConnected(false);
+    } finally {
+      setGcalSyncing(false);
+    }
+  };
+
+  // Auto-pull on connect
+  useEffect(() => {
+    if (gcalConnected) syncFromGoogle();
+  }, [gcalConnected]);
+
+  const handleGcalConnect = () => {
+    if (gcalPlaceholder) {
+      setGcalError("Please add your Google Client ID to src/lib/googleCalendar.js first.");
+      return;
+    }
+    requestAccess();
+  };
+
+  const handleGcalDisconnect = () => {
+    gcalDisconnect();
+    setGcalConnected(false);
+    // Remove Google-sourced events from local state
+    setEvents(prev => prev.filter(e => !e.fromGoogle));
+  };
+
+  // ── Calendar helpers ───────────────────────────────────────────────────
   const cy = cur.getFullYear(), cm = cur.getMonth() + 1;
   const dim = daysInMonth(cy, cm), fd = firstWeekDay(cy, cm);
   const filtered = filter === "all" ? events : events.filter(e => e.members.includes(filter));
@@ -587,15 +646,45 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
     return { date:dstr, label, evts:filtered.filter(e => e.date === dstr) };
   });
 
-  const saveEvt = form => {
+  // ── Save event (push to Google Calendar if connected) ─────────────────
+  const saveEvt = async form => {
     if (modal?.mode === "edit") {
       setEvents(prev => prev.map(e => e.id === form.id ? form : e));
       logActivity?.("calendar", "Edited event", `"${form.title}" on ${fmtDate(form.date)}`);
+      // Push update to Google Calendar
+      if (gcalConnected && !form.fromGoogle) {
+        try {
+          if (form.googleEventId) {
+            await updateGoogleEvent(form.googleEventId, form);
+          } else {
+            const gev = await createGoogleEvent(form);
+            if (gev?.id) setEvents(prev => prev.map(e => e.id === form.id ? { ...e, googleEventId: gev.id } : e));
+          }
+        } catch (e) { setGcalError(e.message); }
+      }
     } else {
-      setEvents(prev => [...prev, { ...form, id:uid() }]);
+      const newId = uid();
+      const newEvt = { ...form, id: newId };
+      setEvents(prev => [...prev, newEvt]);
       logActivity?.("calendar", "Added event", `"${form.title}" on ${fmtDate(form.date)}`);
+      // Push new event to Google Calendar
+      if (gcalConnected) {
+        try {
+          const gev = await createGoogleEvent(newEvt);
+          if (gev?.id) setEvents(prev => prev.map(e => e.id === newId ? { ...e, googleEventId: gev.id } : e));
+        } catch (e) { setGcalError(e.message); }
+      }
     }
     setModal(null);
+  };
+
+  // ── Delete event (also remove from Google Calendar) ───────────────────
+  const deleteEvt = async (ev) => {
+    setEvents(prev => prev.filter(e => e.id !== ev.id));
+    logActivity?.("calendar", "Deleted event", `"${ev.title}" on ${fmtDate(ev.date)}`);
+    if (gcalConnected && ev.googleEventId) {
+      try { await deleteGoogleEvent(ev.googleEventId); } catch (e) { setGcalError(e.message); }
+    }
   };
 
   return (
@@ -604,11 +693,56 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
         title="Family Calendar"
         subtitle={`${MONTHS[cm - 1]} ${cy}`}
         action={
-          <button onClick={() => setModal({ mode:"add" })} className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700">
-            <Plus size={16} /> Add Event
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* ── Google Calendar connect/sync bar ── */}
+            {gcalConnected ? (
+              <>
+                <button
+                  onClick={syncFromGoogle}
+                  disabled={gcalSyncing}
+                  className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-700 px-3 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 disabled:opacity-60"
+                >
+                  <span style={{ fontSize:14 }}>🔄</span>
+                  {gcalSyncing ? "Syncing…" : "Sync Google"}
+                </button>
+                <button
+                  onClick={handleGcalDisconnect}
+                  className="flex items-center gap-1.5 bg-white border border-red-200 text-red-500 px-3 py-2 rounded-xl text-sm font-medium hover:bg-red-50"
+                >
+                  <span style={{ fontSize:14 }}>📅</span> Disconnect
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={handleGcalConnect}
+                className="flex items-center gap-1.5 bg-white border border-blue-300 text-blue-600 px-3 py-2 rounded-xl text-sm font-medium hover:bg-blue-50"
+              >
+                <span style={{ fontSize:14 }}>📅</span> Connect Google Calendar
+              </button>
+            )}
+            <button onClick={() => setModal({ mode:"add" })} className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700">
+              <Plus size={16} /> Add Event
+            </button>
+          </div>
         }
       />
+
+      {/* ── Google Calendar error banner ── */}
+      {gcalError && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+          <p className="text-sm text-red-600">⚠️ {gcalError}</p>
+          <button onClick={() => setGcalError(null)} className="text-red-400 hover:text-red-600"><X size={14} /></button>
+        </div>
+      )}
+
+      {/* ── Google Calendar connected badge ── */}
+      {gcalConnected && (
+        <div className="mb-4 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 flex items-center gap-2">
+          <span style={{ fontSize:16 }}>📅</span>
+          <p className="text-sm text-blue-700 font-medium">Google Calendar connected — events sync automatically</p>
+          <span className="ml-auto text-xs text-blue-400">Google events shown with 🌐</span>
+        </div>
+      )}
 
       {countdowns.length > 0 && (
         <div className="flex gap-3 mb-6 flex-wrap">
@@ -675,6 +809,7 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
                           onClick={() => setModal({ mode:"edit", evt:ev })}
                           className="text-xs px-1.5 py-0.5 rounded font-medium truncate cursor-pointer hover:opacity-80"
                         >
+                          {ev.fromGoogle && <span className="opacity-75 mr-0.5">🌐</span>}
                           {ev.time && <span className="opacity-75 mr-1">{ev.time}</span>}{ev.title}
                         </div>
                       );
@@ -705,12 +840,12 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
                         <div key={ev.id} style={{ borderLeft:`4px solid ${c.bg}` }} className="bg-white rounded-xl border border-gray-100 p-3 flex items-start gap-3 group">
                           <div className="flex-1">
                             {ev.time && <span className="text-xs text-gray-400 font-medium">{ev.time}</span>}
-                            <p className="font-semibold text-gray-800 text-sm">{ev.title}</p>
+                            <p className="font-semibold text-gray-800 text-sm">{ev.fromGoogle && <span className="mr-1 text-blue-400">🌐</span>}{ev.title}</p>
                             <div className="flex gap-1 mt-1 flex-wrap">{ev.members.map(mid => <Pill key={mid} id={mid} />)}</div>
                           </div>
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button onClick={() => setModal({ mode:"edit", evt:ev })} className="p-1 text-gray-400 hover:text-indigo-500"><Edit3 size={13} /></button>
-                            <button onClick={() => { setEvents(prev => prev.filter(e => e.id !== ev.id)); logActivity?.("calendar", "Deleted event", `"${ev.title}" on ${fmtDate(ev.date)}`); }} className="p-1 text-gray-400 hover:text-red-400"><X size={13} /></button>
+                            <button onClick={() => deleteEvt(ev)} className="p-1 text-gray-400 hover:text-red-400"><X size={13} /></button>
                           </div>
                         </div>
                       );
