@@ -992,7 +992,7 @@ function AIAssistantTab({ members, events, chores, wallets, goals, budget }) {
   };
 
   return (
-    <div className="flex flex-col" style={{ height:"calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 140px)" }}>
+    <div className="flex flex-col" style={{ flex:1, minHeight:0, overflow:"hidden" }}>
       <PageHeader
         title="AI Assistant"
         subtitle="Ask anything about your family's schedule, chores & finances"
@@ -3919,16 +3919,22 @@ export default function App() {
           </div>
 
           {/* ── Scrollable content ──
-               Scrollable div is transparent so the dark shell shows below content.
-               Inner wrapper carries the ECEAF8 background — only as tall as content,
-               so any empty space below the last card shows dark (matches nav). */}
-          <div style={{ flex:1, overflowY:"auto", WebkitOverflowScrolling:"touch", background:"#ECEAF8", minHeight:0 }}>
-            <div className="p-4 md:p-8 max-w-6xl mx-auto" style={{
-              paddingBottom:"calc(env(safe-area-inset-bottom) + 56px)",
-            }}>
+               When the AI Assistant is active we switch to a non-scrolling flex
+               column so the chat input bar can stay pinned at the bottom.
+               All other tabs use the normal vertically-scrolling wrapper. */}
+          {active === "assistant" ? (
+            <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0, overflow:"hidden", background:"#ECEAF8", padding:"0 16px", paddingBottom:"calc(env(safe-area-inset-bottom) + 60px)" }}>
               {renderPage()}
             </div>
-          </div>
+          ) : (
+            <div style={{ flex:1, overflowY:"auto", WebkitOverflowScrolling:"touch", background:"#ECEAF8", minHeight:0 }}>
+              <div className="p-4 md:p-8 max-w-6xl mx-auto" style={{
+                paddingBottom:"calc(env(safe-area-inset-bottom) + 56px)",
+              }}>
+                {renderPage()}
+              </div>
+            </div>
+          )}
         </div>
 
         <MobileBottomNav
