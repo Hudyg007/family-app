@@ -4,7 +4,7 @@ import { Calendar, CheckSquare, ShoppingCart, Wallet, Target, Settings,
   ChevronLeft, ChevronRight, Plus, X, Check, Star, TrendingUp,
   Home, Bell, Lock, Trash2, DollarSign, ArrowUpCircle, Repeat,
   Edit3, BarChart2, User, Save, UserPlus, AlertTriangle,
-  Utensils, MoreVertical, Clock } from "lucide-react";
+  Utensils, MoreVertical, Clock, Sparkles, Send } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell } from "recharts";
 import { useAuth, LS_DATA, getDataKey } from "./src/contexts/AuthContext.jsx";
@@ -23,6 +23,7 @@ import {
   isConnected as gcalIsConnected, fetchGoogleEvents, createGoogleEvent,
   updateGoogleEvent, deleteGoogleEvent, fromGoogleEvent, GCAL_CLIENT_ID,
 } from "./src/lib/googleCalendar.js";
+import { fetchTeamSnapEvents } from "./src/lib/teamsnap.js";
 /* ── MEMBER AVATAR HELPER ────────────────────────────────────────────────── */
 function MemberAvatar({ member, size = 44, style: extraStyle = {} }) {
   if (!member) return null;
@@ -91,15 +92,16 @@ const MONTHS = ["January","February","March","April","May","June","July","August
 const DSHORT = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const FREQ_LABELS = { daily:"Daily", weekly:"Weekly", biweekly:"Every 2 Weeks", monthly:"Monthly", custom:"Custom" };
 const NAV = [
-  { id:"calendar", icon:Calendar,    label:"Calendar"  },
-  { id:"chores",   icon:CheckSquare, label:"Chores"    },
-  { id:"lists",    icon:ShoppingCart,label:"Lists"     },
+  { id:"calendar", icon:Calendar,    label:"Calendar"     },
+  { id:"chores",   icon:CheckSquare, label:"Chores"       },
+  { id:"lists",    icon:ShoppingCart,label:"Lists"        },
   { id:"meals",    icon:Utensils,    label:"Meal Planner" },
-  { id:"wallet",   icon:Wallet,      label:"Wallet"    },
-  { id:"goals",    icon:Target,      label:"Goals"     },
-  { id:"budget",   icon:BarChart2,   label:"Budget"    },
-  { id:"activity", icon:Clock,       label:"Activity"  },
-  { id:"settings", icon:Settings,    label:"Settings"  },
+  { id:"wallet",   icon:Wallet,      label:"Wallet"       },
+  { id:"goals",    icon:Target,      label:"Goals"        },
+  { id:"budget",   icon:BarChart2,   label:"Budget"       },
+  { id:"assistant",icon:Sparkles,    label:"AI Assistant" },
+  { id:"activity", icon:Clock,       label:"Activity"     },
+  { id:"settings", icon:Settings,    label:"Settings"     },
 ];
 
 /* ── UTILS ──────────────────────────────────────────────────────────────── */
@@ -563,7 +565,7 @@ function WeekView({ wdays, evC, setModal }) {
   );
 }
 
-function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests }) {
+function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests, teamsnapUrl, setTeamsnapUrl }) {
   const { members, getColor, logActivity } = useFamily();
   const [view, setView] = useState("month");
   const [cur, setCur] = useState(new Date());
@@ -621,6 +623,49 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
     setGcalConnected(false);
     // Remove Google-sourced events from local state
     setEvents(prev => prev.filter(e => !e.fromGoogle));
+  };
+
+  // ── TeamSnap iCal state ────────────────────────────────────────────────
+  const [tsModalOpen,  setTsModalOpen]  = useState(false);
+  const [tsInputUrl,   setTsInputUrl]   = useState("");
+  const [tsSyncing,    setTsSyncing]    = useState(false);
+  const [tsError,      setTsError]      = useState(null);
+
+  const syncTeamSnap = async (url) => {
+    const target = url || teamsnapUrl;
+    if (!target?.trim()) return;
+    setTsSyncing(true);
+    setTsError(null);
+    try {
+      const incoming = await fetchTeamSnapEvents(target);
+      setEvents(prev => {
+        const local = prev.filter(e => !e.fromTeamSnap);
+        return [...local, ...incoming];
+      });
+      if (url) setTeamsnapUrl(url); // save if new URL
+    } catch (e) {
+      setTsError(e.message);
+    } finally {
+      setTsSyncing(false);
+    }
+  };
+
+  // Auto-sync on mount if URL already saved
+  useEffect(() => {
+    if (teamsnapUrl) syncTeamSnap(teamsnapUrl);
+  }, []);
+
+  const handleTsConnect = () => {
+    if (!tsInputUrl.trim()) return;
+    setTsModalOpen(false);
+    syncTeamSnap(tsInputUrl.trim());
+    setTsInputUrl("");
+  };
+
+  const handleTsDisconnect = () => {
+    setTeamsnapUrl("");
+    setEvents(prev => prev.filter(e => !e.fromTeamSnap));
+    setTsError(null);
   };
 
   // ── Calendar helpers ───────────────────────────────────────────────────
@@ -694,6 +739,33 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
         subtitle={`${MONTHS[cm - 1]} ${cy}`}
         action={
           <div className="flex items-center gap-2 flex-wrap">
+            {/* ── TeamSnap connect/sync bar ── */}
+            {teamsnapUrl ? (
+              <>
+                <button
+                  onClick={() => syncTeamSnap(teamsnapUrl)}
+                  disabled={tsSyncing}
+                  className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-700 px-3 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 disabled:opacity-60"
+                >
+                  <span style={{ fontSize:14 }}>🏆</span>
+                  {tsSyncing ? "Syncing…" : "Sync TeamSnap"}
+                </button>
+                <button
+                  onClick={handleTsDisconnect}
+                  className="flex items-center gap-1.5 bg-white border border-red-200 text-red-500 px-3 py-2 rounded-xl text-sm font-medium hover:bg-red-50"
+                >
+                  <span style={{ fontSize:14 }}>🏆</span> Disconnect
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setTsModalOpen(true)}
+                className="flex items-center gap-1.5 bg-white border border-orange-300 text-orange-600 px-3 py-2 rounded-xl text-sm font-medium hover:bg-orange-50"
+              >
+                <span style={{ fontSize:14 }}>🏆</span> Connect TeamSnap
+              </button>
+            )}
+
             {/* ── Google Calendar connect/sync bar ── */}
             {gcalConnected ? (
               <>
@@ -726,6 +798,47 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
           </div>
         }
       />
+
+      {/* ── TeamSnap URL input modal ── */}
+      {tsModalOpen && (
+        <Modal title="Connect TeamSnap" onClose={() => { setTsModalOpen(false); setTsInputUrl(""); }}>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">Paste your TeamSnap iCal link below. To find it:</p>
+            <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+              <li>Open TeamSnap and go to your team</li>
+              <li>Click <strong>Schedule</strong> in the menu</li>
+              <li>Look for <strong>Export / Subscribe</strong> or a calendar icon</li>
+              <li>Copy the <strong>iCal / .ics URL</strong></li>
+            </ol>
+            <input
+              value={tsInputUrl}
+              onChange={e => setTsInputUrl(e.target.value)}
+              placeholder="https://ical.teamsnap.com/..."
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            />
+          </div>
+          <div className="flex gap-3 mt-6">
+            <button onClick={() => { setTsModalOpen(false); setTsInputUrl(""); }} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
+            <button onClick={handleTsConnect} disabled={!tsInputUrl.trim()} className="flex-1 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 disabled:opacity-50">Connect</button>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── TeamSnap error banner ── */}
+      {tsError && (
+        <div className="mb-4 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+          <p className="text-sm text-orange-700">⚠️ {tsError}</p>
+          <button onClick={() => setTsError(null)} className="text-orange-400 hover:text-orange-600"><X size={14} /></button>
+        </div>
+      )}
+
+      {/* ── TeamSnap connected badge ── */}
+      {teamsnapUrl && !tsError && (
+        <div className="mb-4 bg-orange-50 border border-orange-100 rounded-xl px-4 py-2.5 flex items-center gap-2">
+          <span style={{ fontSize:16 }}>🏆</span>
+          <p className="text-sm text-orange-700 font-medium">TeamSnap connected — games &amp; practices sync automatically</p>
+        </div>
+      )}
 
       {/* ── Google Calendar error banner ── */}
       {gcalError && (
@@ -810,6 +923,7 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
                           className="text-xs px-1.5 py-0.5 rounded font-medium truncate cursor-pointer hover:opacity-80"
                         >
                           {ev.fromGoogle && <span className="opacity-75 mr-0.5">🌐</span>}
+                          {ev.fromTeamSnap && <span className="opacity-75 mr-0.5">🏆</span>}
                           {ev.time && <span className="opacity-75 mr-1">{ev.time}</span>}{ev.title}
                         </div>
                       );
@@ -840,7 +954,7 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
                         <div key={ev.id} style={{ borderLeft:`4px solid ${c.bg}` }} className="bg-white rounded-xl border border-gray-100 p-3 flex items-start gap-3 group">
                           <div className="flex-1">
                             {ev.time && <span className="text-xs text-gray-400 font-medium">{ev.time}</span>}
-                            <p className="font-semibold text-gray-800 text-sm">{ev.fromGoogle && <span className="mr-1 text-blue-400">🌐</span>}{ev.title}</p>
+                            <p className="font-semibold text-gray-800 text-sm">{ev.fromGoogle && <span className="mr-1 text-blue-400">🌐</span>}{ev.fromTeamSnap && <span className="mr-1 text-orange-400">🏆</span>}{ev.title}</p>
                             <div className="flex gap-1 mt-1 flex-wrap">{ev.members.map(mid => <Pill key={mid} id={mid} />)}</div>
                           </div>
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -927,6 +1041,159 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
           onClose={() => setModal(null)}
         />
       )}
+    </div>
+  );
+}
+
+/* ── AI ASSISTANT ────────────────────────────────────────────────────────── */
+const SUPABASE_FUNCTION_URL = "https://tlesspylcfngfnqdcera.supabase.co/functions/v1/gemini-chat";
+
+const SUGGESTED_PROMPTS = [
+  "What's on the family schedule this week?",
+  "Who has chores due today?",
+  "How are the kids doing with their savings goals?",
+  "Any suggestions to help us stay more organised?",
+];
+
+function AIAssistantTab({ members, events, chores, wallets, goals, budget }) {
+  const [messages,  setMessages]  = useState([]);
+  const [input,     setInput]     = useState("");
+  const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState(null);
+  const bottomRef = useRef(null);
+  const inputRef  = useRef(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
+
+  const familyData = { members, events, chores, wallets, goals, budget };
+
+  const sendMessage = async (text) => {
+    const userText = (text || input).trim();
+    if (!userText || loading) return;
+    setInput("");
+    setError(null);
+
+    const next = [...messages, { role: "user", content: userText }];
+    setMessages(next);
+    setLoading(true);
+
+    try {
+      const res = await fetch(SUPABASE_FUNCTION_URL, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ messages: next, familyData }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+    } catch (e) {
+      setError(e.message || "Something went wrong. Please try again.");
+      setMessages(prev => prev.slice(0, -1)); // remove user message on error
+      setInput(userText);
+    } finally {
+      setLoading(false);
+      inputRef.current?.focus();
+    }
+  };
+
+  const handleKey = e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  };
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-8rem)] max-h-[800px]">
+      <PageHeader
+        title="AI Assistant"
+        subtitle="Ask anything about your family's schedule, chores & finances"
+      />
+
+      {/* ── Chat messages ── */}
+      <div className="flex-1 overflow-y-auto space-y-4 pb-4 pr-1">
+        {messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full gap-6 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center">
+              <Sparkles size={32} className="text-indigo-500" />
+            </div>
+            <div>
+              <p className="font-bold text-gray-800 text-lg">Hi! I'm your Family Assistant 👋</p>
+              <p className="text-sm text-gray-500 mt-1">Ask me anything about your family's schedule, chores, or finances.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-2 w-full max-w-sm">
+              {SUGGESTED_PROMPTS.map(p => (
+                <button
+                  key={p}
+                  onClick={() => sendMessage(p)}
+                  className="text-left text-sm px-4 py-3 bg-white border border-gray-100 rounded-xl text-gray-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700 transition-all shadow-sm"
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {messages.map((m, i) => (
+          <div key={i} className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm ${m.role === "user" ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-600"}`}>
+              {m.role === "user" ? <User size={14} /> : <Sparkles size={14} />}
+            </div>
+            <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+              m.role === "user"
+                ? "bg-indigo-600 text-white rounded-tr-sm"
+                : "bg-white border border-gray-100 text-gray-800 rounded-tl-sm shadow-sm"
+            }`}>
+              {m.content}
+            </div>
+          </div>
+        ))}
+
+        {loading && (
+          <div className="flex gap-3">
+            <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center flex-shrink-0">
+              <Sparkles size={14} className="text-indigo-600" />
+            </div>
+            <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+              <div className="flex gap-1 items-center">
+                <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay:"0ms" }} />
+                <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay:"150ms" }} />
+                <span className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay:"300ms" }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600 flex items-center justify-between">
+            <span>⚠️ {error}</span>
+            <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600 ml-2"><X size={14} /></button>
+          </div>
+        )}
+
+        <div ref={bottomRef} />
+      </div>
+
+      {/* ── Input bar ── */}
+      <div className="flex gap-2 pt-3 border-t border-gray-100">
+        <textarea
+          ref={inputRef}
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={handleKey}
+          placeholder="Ask me anything…"
+          rows={1}
+          className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          style={{ maxHeight: 120, overflowY: "auto" }}
+        />
+        <button
+          onClick={() => sendMessage()}
+          disabled={!input.trim() || loading}
+          className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center hover:bg-indigo-700 disabled:opacity-40 flex-shrink-0 self-end"
+        >
+          <Send size={16} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -3416,6 +3683,7 @@ export default function App() {
   const [notifications,   setNotifications]   = useState([]);
   const [issueReports,    setIssueReports]    = useState([]);
   const [activityLog,     setActivityLog]     = useState([]);
+  const [teamsnapUrl,     setTeamsnapUrl]     = useState("");
   const [reportOpen,      setReportOpen]      = useState(false);
   const [headerMenuOpen,  setHeaderMenuOpen]  = useState(false);
   const avatarBtnRef = useRef(null);
@@ -3437,6 +3705,7 @@ export default function App() {
       if (d.mealPlanner)   setMealPlanner(p => ({ ...p, ...d.mealPlanner }));
       if (d.issueReports)  setIssueReports(d.issueReports);
       if (d.activityLog)   setActivityLog(d.activityLog);
+      if (d.teamsnapUrl)   setTeamsnapUrl(d.teamsnapUrl);
       const today = ds(Y, M, D);
       const rawAllowances = d.allowances || [];
       const rawWallets    = d.wallets    || {};
@@ -3491,7 +3760,7 @@ export default function App() {
   /* Persist all state changes back to localStorage (only once data is loaded) */
   useEffect(() => {
     if (members.length === 0) return; // skip before data is loaded
-    const payload = { members, events, chores, lists, wallets, goals, budget, allowances, mealPlanner, pendingRequests, notifications, issueReports, activityLog };
+    const payload = { members, events, chores, lists, wallets, goals, budget, allowances, mealPlanner, pendingRequests, notifications, issueReports, activityLog, teamsnapUrl };
     localStorage.setItem(DATA_KEY, JSON.stringify(payload));
     // Debounced cloud sync — fires 3 seconds after last change to avoid spamming
     const t = setTimeout(() => pushFamilyToCloud(account?.email, payload), 3000);
@@ -3642,7 +3911,8 @@ export default function App() {
 
   /* ── Parent view ── */
   const renderPage = () => {
-    if (active === "calendar") return <CalendarModule events={events} setEvents={setEvents} pendingRequests={pendingRequests} setPendingRequests={setPendingRequests} />;
+    if (active === "assistant") return <AIAssistantTab members={members} events={events} chores={chores} wallets={wallets} goals={goals} budget={budget} />;
+    if (active === "calendar") return <CalendarModule events={events} setEvents={setEvents} pendingRequests={pendingRequests} setPendingRequests={setPendingRequests} teamsnapUrl={teamsnapUrl} setTeamsnapUrl={setTeamsnapUrl} />;
     if (active === "chores")   return <ChoresModule   chores={chores}   setChores={setChores}   wallets={wallets} setWallets={setWallets} />;
     if (active === "lists")    return <ListsModule    lists={lists}     setLists={setLists} />;
     if (active === "wallet")   return <WalletModule   wallets={wallets} setWallets={setWallets} allowances={allowances} setAllowances={setAllowances} />;
