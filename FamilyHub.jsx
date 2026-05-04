@@ -992,7 +992,7 @@ function AIAssistantTab({ members, events, chores, wallets, goals, budget }) {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-h-[800px] bottom-nav-pad md:pb-0">
+    <div className="flex flex-col" style={{ height:"calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 140px)" }}>
       <PageHeader
         title="AI Assistant"
         subtitle="Ask anything about your family's schedule, chores & finances"
