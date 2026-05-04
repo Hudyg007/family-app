@@ -3927,9 +3927,9 @@ export default function App() {
               {renderPage()}
             </div>
           ) : (
-            <div style={{ flex:1, overflowY:"auto", WebkitOverflowScrolling:"touch", background:"#ECEAF8", minHeight:0 }}>
+            <div style={{ flex:1, overflowY:"auto", WebkitOverflowScrolling:"touch", background:"#ECEAF8", minHeight:0, overflowX:"hidden" }}>
               <div className="p-4 md:p-8 max-w-6xl mx-auto" style={{
-                paddingBottom:"calc(env(safe-area-inset-bottom) + 56px)",
+                paddingBottom:"calc(env(safe-area-inset-bottom) + 80px)",
               }}>
                 {renderPage()}
               </div>
