@@ -23,7 +23,6 @@ import {
   isConnected as gcalIsConnected, fetchGoogleEvents, createGoogleEvent,
   updateGoogleEvent, deleteGoogleEvent, fromGoogleEvent, GCAL_CLIENT_ID,
 } from "./src/lib/googleCalendar.js";
-import { fetchTeamSnapEvents } from "./src/lib/teamsnap.js";
 /* ── MEMBER AVATAR HELPER ────────────────────────────────────────────────── */
 function MemberAvatar({ member, size = 44, style: extraStyle = {} }) {
   if (!member) return null;
@@ -565,7 +564,7 @@ function WeekView({ wdays, evC, setModal }) {
   );
 }
 
-function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests, teamsnapUrl, setTeamsnapUrl }) {
+function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests }) {
   const { members, getColor, logActivity } = useFamily();
   const [view, setView] = useState("month");
   const [cur, setCur] = useState(new Date());
@@ -623,49 +622,6 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
     setGcalConnected(false);
     // Remove Google-sourced events from local state
     setEvents(prev => prev.filter(e => !e.fromGoogle));
-  };
-
-  // ── TeamSnap iCal state ────────────────────────────────────────────────
-  const [tsModalOpen,  setTsModalOpen]  = useState(false);
-  const [tsInputUrl,   setTsInputUrl]   = useState("");
-  const [tsSyncing,    setTsSyncing]    = useState(false);
-  const [tsError,      setTsError]      = useState(null);
-
-  const syncTeamSnap = async (url) => {
-    const target = url || teamsnapUrl;
-    if (!target?.trim()) return;
-    setTsSyncing(true);
-    setTsError(null);
-    try {
-      const incoming = await fetchTeamSnapEvents(target);
-      setEvents(prev => {
-        const local = prev.filter(e => !e.fromTeamSnap);
-        return [...local, ...incoming];
-      });
-      if (url) setTeamsnapUrl(url); // save if new URL
-    } catch (e) {
-      setTsError(e.message);
-    } finally {
-      setTsSyncing(false);
-    }
-  };
-
-  // Auto-sync on mount if URL already saved
-  useEffect(() => {
-    if (teamsnapUrl) syncTeamSnap(teamsnapUrl);
-  }, []);
-
-  const handleTsConnect = () => {
-    if (!tsInputUrl.trim()) return;
-    setTsModalOpen(false);
-    syncTeamSnap(tsInputUrl.trim());
-    setTsInputUrl("");
-  };
-
-  const handleTsDisconnect = () => {
-    setTeamsnapUrl("");
-    setEvents(prev => prev.filter(e => !e.fromTeamSnap));
-    setTsError(null);
   };
 
   // ── Calendar helpers ───────────────────────────────────────────────────
@@ -739,33 +695,6 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
         subtitle={`${MONTHS[cm - 1]} ${cy}`}
         action={
           <div className="flex items-center gap-2 flex-wrap">
-            {/* ── TeamSnap connect/sync bar ── */}
-            {teamsnapUrl ? (
-              <>
-                <button
-                  onClick={() => syncTeamSnap(teamsnapUrl)}
-                  disabled={tsSyncing}
-                  className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-700 px-3 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 disabled:opacity-60"
-                >
-                  <span style={{ fontSize:14 }}>🏆</span>
-                  {tsSyncing ? "Syncing…" : "Sync TeamSnap"}
-                </button>
-                <button
-                  onClick={handleTsDisconnect}
-                  className="flex items-center gap-1.5 bg-white border border-red-200 text-red-500 px-3 py-2 rounded-xl text-sm font-medium hover:bg-red-50"
-                >
-                  <span style={{ fontSize:14 }}>🏆</span> Disconnect
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setTsModalOpen(true)}
-                className="flex items-center gap-1.5 bg-white border border-orange-300 text-orange-600 px-3 py-2 rounded-xl text-sm font-medium hover:bg-orange-50"
-              >
-                <span style={{ fontSize:14 }}>🏆</span> Connect TeamSnap
-              </button>
-            )}
-
             {/* ── Google Calendar connect/sync bar ── */}
             {gcalConnected ? (
               <>
@@ -799,46 +728,7 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
         }
       />
 
-      {/* ── TeamSnap URL input modal ── */}
-      {tsModalOpen && (
-        <Modal title="Connect TeamSnap" onClose={() => { setTsModalOpen(false); setTsInputUrl(""); }}>
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">Paste your TeamSnap iCal link below. To find it:</p>
-            <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
-              <li>Open TeamSnap and go to your team</li>
-              <li>Click <strong>Schedule</strong> in the menu</li>
-              <li>Look for <strong>Export / Subscribe</strong> or a calendar icon</li>
-              <li>Copy the <strong>iCal / .ics URL</strong></li>
-            </ol>
-            <input
-              value={tsInputUrl}
-              onChange={e => setTsInputUrl(e.target.value)}
-              placeholder="https://ical.teamsnap.com/..."
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-            />
-          </div>
-          <div className="flex gap-3 mt-6">
-            <button onClick={() => { setTsModalOpen(false); setTsInputUrl(""); }} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
-            <button onClick={handleTsConnect} disabled={!tsInputUrl.trim()} className="flex-1 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 disabled:opacity-50">Connect</button>
-          </div>
-        </Modal>
-      )}
 
-      {/* ── TeamSnap error banner ── */}
-      {tsError && (
-        <div className="mb-4 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-          <p className="text-sm text-orange-700">⚠️ {tsError}</p>
-          <button onClick={() => setTsError(null)} className="text-orange-400 hover:text-orange-600"><X size={14} /></button>
-        </div>
-      )}
-
-      {/* ── TeamSnap connected badge ── */}
-      {teamsnapUrl && !tsError && (
-        <div className="mb-4 bg-orange-50 border border-orange-100 rounded-xl px-4 py-2.5 flex items-center gap-2">
-          <span style={{ fontSize:16 }}>🏆</span>
-          <p className="text-sm text-orange-700 font-medium">TeamSnap connected — games &amp; practices sync automatically</p>
-        </div>
-      )}
 
       {/* ── Google Calendar error banner ── */}
       {gcalError && (
@@ -923,8 +813,7 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
                           className="text-xs px-1.5 py-0.5 rounded font-medium truncate cursor-pointer hover:opacity-80"
                         >
                           {ev.fromGoogle && <span className="opacity-75 mr-0.5">🌐</span>}
-                          {ev.fromTeamSnap && <span className="opacity-75 mr-0.5">🏆</span>}
-                          {ev.time && <span className="opacity-75 mr-1">{ev.time}</span>}{ev.title}
+{ev.time && <span className="opacity-75 mr-1">{ev.time}</span>}{ev.title}
                         </div>
                       );
                     })}
@@ -954,7 +843,7 @@ function CalendarModule({ events, setEvents, pendingRequests, setPendingRequests
                         <div key={ev.id} style={{ borderLeft:`4px solid ${c.bg}` }} className="bg-white rounded-xl border border-gray-100 p-3 flex items-start gap-3 group">
                           <div className="flex-1">
                             {ev.time && <span className="text-xs text-gray-400 font-medium">{ev.time}</span>}
-                            <p className="font-semibold text-gray-800 text-sm">{ev.fromGoogle && <span className="mr-1 text-blue-400">🌐</span>}{ev.fromTeamSnap && <span className="mr-1 text-orange-400">🏆</span>}{ev.title}</p>
+                            <p className="font-semibold text-gray-800 text-sm">{ev.fromGoogle && <span className="mr-1 text-blue-400">🌐</span>}{ev.title}</p>
                             <div className="flex gap-1 mt-1 flex-wrap">{ev.members.map(mid => <Pill key={mid} id={mid} />)}</div>
                           </div>
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -3683,7 +3572,6 @@ export default function App() {
   const [notifications,   setNotifications]   = useState([]);
   const [issueReports,    setIssueReports]    = useState([]);
   const [activityLog,     setActivityLog]     = useState([]);
-  const [teamsnapUrl,     setTeamsnapUrl]     = useState("");
   const [reportOpen,      setReportOpen]      = useState(false);
   const [headerMenuOpen,  setHeaderMenuOpen]  = useState(false);
   const avatarBtnRef = useRef(null);
@@ -3705,7 +3593,6 @@ export default function App() {
       if (d.mealPlanner)   setMealPlanner(p => ({ ...p, ...d.mealPlanner }));
       if (d.issueReports)  setIssueReports(d.issueReports);
       if (d.activityLog)   setActivityLog(d.activityLog);
-      if (d.teamsnapUrl)   setTeamsnapUrl(d.teamsnapUrl);
       const today = ds(Y, M, D);
       const rawAllowances = d.allowances || [];
       const rawWallets    = d.wallets    || {};
@@ -3760,7 +3647,7 @@ export default function App() {
   /* Persist all state changes back to localStorage (only once data is loaded) */
   useEffect(() => {
     if (members.length === 0) return; // skip before data is loaded
-    const payload = { members, events, chores, lists, wallets, goals, budget, allowances, mealPlanner, pendingRequests, notifications, issueReports, activityLog, teamsnapUrl };
+    const payload = { members, events, chores, lists, wallets, goals, budget, allowances, mealPlanner, pendingRequests, notifications, issueReports, activityLog };
     localStorage.setItem(DATA_KEY, JSON.stringify(payload));
     // Debounced cloud sync — fires 3 seconds after last change to avoid spamming
     const t = setTimeout(() => pushFamilyToCloud(account?.email, payload), 3000);
@@ -3912,7 +3799,7 @@ export default function App() {
   /* ── Parent view ── */
   const renderPage = () => {
     if (active === "assistant") return <AIAssistantTab members={members} events={events} chores={chores} wallets={wallets} goals={goals} budget={budget} />;
-    if (active === "calendar") return <CalendarModule events={events} setEvents={setEvents} pendingRequests={pendingRequests} setPendingRequests={setPendingRequests} teamsnapUrl={teamsnapUrl} setTeamsnapUrl={setTeamsnapUrl} />;
+    if (active === "calendar") return <CalendarModule events={events} setEvents={setEvents} pendingRequests={pendingRequests} setPendingRequests={setPendingRequests} />;
     if (active === "chores")   return <ChoresModule   chores={chores}   setChores={setChores}   wallets={wallets} setWallets={setWallets} />;
     if (active === "lists")    return <ListsModule    lists={lists}     setLists={setLists} />;
     if (active === "wallet")   return <WalletModule   wallets={wallets} setWallets={setWallets} allowances={allowances} setAllowances={setAllowances} />;
