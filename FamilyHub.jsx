@@ -3658,20 +3658,22 @@ export default function App() {
      back; iOS sometimes leaves a residual scroll offset that pushes fixed elements
      (the bottom nav) up and creates a gap.  Snap everything back to 0 on dismiss. */
   useEffect(() => {
-    if (!window.visualViewport) return;
-    let lastH = window.visualViewport.height;
-    const onResize = () => {
-      const h = window.visualViewport.height;
-      if (h > lastH + 80) {
-        // Viewport just grew — keyboard dismissed; reset any iOS-induced scroll
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      }
-      lastH = h;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const root = document.documentElement;
+      // Pin the app container to the visual viewport so the header never
+      // slides behind the iOS status bar when the keyboard appears.
+      root.style.setProperty("--vvh",  vv.height    + "px");
+      root.style.setProperty("--vvy",  vv.offsetTop + "px");
     };
-    window.visualViewport.addEventListener("resize", onResize);
-    return () => window.visualViewport.removeEventListener("resize", onResize);
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    update(); // initial values
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
   }, []);
 
   const getColor = id => { const m = members.find(x => x.id === id); return m ? getP(m.colorKey) : null; };
@@ -3817,8 +3819,11 @@ export default function App() {
     <FamilyCtx.Provider value={ctx}>
       <AppStyles />
       <div style={{
-        position:"fixed", top:0, left:0, right:0, bottom:0,
-        width:"100%", height:"100dvh",
+        position:"fixed",
+        top:"var(--vvy, 0px)",
+        left:0, right:0,
+        width:"100%",
+        height:"var(--vvh, 100dvh)",
         overflow:"hidden",
         background:"#ECEAF8", fontFamily:"'Inter',system-ui,sans-serif",
         display:"flex",
