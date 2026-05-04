@@ -9,7 +9,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell } from "recharts";
 import { useAuth, LS_DATA, getDataKey } from "./src/contexts/AuthContext.jsx";
 import MealPlannerTab, { DEFAULT_MEAL_PLANNER } from "./src/components/adult/mealplanner/MealPlannerTab.jsx";
-import LandingScreen       from "./src/components/auth/LandingScreen.jsx";
+import LandingScreen       from "./src/componenhts/auth/LandingScreen.jsx";
 import EmailEntry          from "./src/components/auth/EmailEntry.jsx";
 import EmailVerification   from "./src/components/auth/EmailVerification.jsx";
 import CreatePassword      from "./src/components/auth/CreatePassword.jsx";
@@ -956,7 +956,10 @@ function AIAssistantTab({ members, events, chores, wallets, goals, budget }) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  const familyData = { members, events, chores, wallets, goals, budget };
+  // wallets is stored as { [memberId]: { spend, save, give, history } } — convert to
+  // an array so the Edge Function can safely call .map() on it
+  const walletsArray = Object.entries(wallets || {}).map(([memberId, w]) => ({ memberId, ...w }));
+  const familyData = { members, events, chores, wallets: walletsArray, goals, budget };
 
   const sendMessage = async (text) => {
     const userText = (text || input).trim();
