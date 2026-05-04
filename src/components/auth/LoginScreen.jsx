@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth, LS_DATA, getDataKey } from "../../contexts/AuthContext.jsx";
+import { pullFromCloud } from "../../lib/cloudSync.js";
 
 const sha256 = async (str) => {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
@@ -16,6 +17,11 @@ export default function LoginScreen() {
   const [shaking, setShaking] = useState(false);
   const [loading, setLoading] = useState(false);
   const [lockLeft, setLockLeft] = useState(0);
+
+  /* New-device restore state */
+  const [restoreEmail,   setRestoreEmail]   = useState("");
+  const [restoreLoading, setRestoreLoading] = useState(false);
+  const [restoreError,   setRestoreError]   = useState("");
 
   /* No account on this device yet */
   const noLocalAccount = !account?.email;
@@ -39,6 +45,33 @@ export default function LoginScreen() {
   }, [account?.lockoutUntil]);
 
   const shake = () => { setShaking(true); setTimeout(() => setShaking(false), 450); };
+
+  const handleRestore = async () => {
+    const email = restoreEmail.trim().toLowerCase();
+    if (!email) { setRestoreError("Please enter your email address."); return; }
+    setRestoreLoading(true);
+    setRestoreError("");
+    try {
+      const result = await pullFromCloud(email);
+      if (!result || !result.accountJson || !result.accountJson.email) {
+        setRestoreError("No account found for that email. Double-check it and try again.");
+        return;
+      }
+      // Restore account into localStorage + context
+      updateAccount(result.accountJson);
+      // Restore family data
+      if (result.familyJson) {
+        const dataKey = getDataKey(email);
+        localStorage.setItem(dataKey, JSON.stringify(result.familyJson));
+      }
+      // Go straight to login so the user enters their password
+      setScreen("login");
+    } catch {
+      setRestoreError("Something went wrong. Please try again.");
+    } finally {
+      setRestoreLoading(false);
+    }
+  };
 
   const submit = async () => {
     if (lockLeft > 0) return;
@@ -77,14 +110,36 @@ export default function LoginScreen() {
         <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm mx-4 fadeUp text-center">
           <div className="text-6xl mb-3">🏠</div>
           <h1 className="text-2xl font-extrabold text-gray-800 mb-1">Family App</h1>
-          <p className="text-gray-500 text-sm mb-6">No account found on this device.</p>
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6 text-left">
-            <p className="text-xs text-amber-700 font-semibold mb-1">Setting up on a new device?</p>
-            <p className="text-xs text-amber-600">Go back and tap <strong>Restore Account from Backup</strong> to import your existing account from the JSON backup you exported on your other device.</p>
+          <p className="text-gray-500 text-sm mb-6">Enter your email to restore your account on this device.</p>
+
+          <div className="text-left mb-4">
+            <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Account Email</label>
+            <input
+              type="email"
+              value={restoreEmail}
+              onChange={e => { setRestoreEmail(e.target.value); setRestoreError(""); }}
+              onKeyDown={e => e.key === "Enter" && handleRestore()}
+              placeholder="you@example.com"
+              autoFocus
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
           </div>
+
+          {restoreError && (
+            <p className="text-red-500 text-xs text-center mb-3">{restoreError}</p>
+          )}
+
+          <button
+            onClick={handleRestore}
+            disabled={restoreLoading}
+            className="w-full py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 disabled:opacity-40 transition-all mb-3"
+          >
+            {restoreLoading ? "Looking up account…" : "Restore My Account →"}
+          </button>
+
           <button
             onClick={() => setScreen("landing")}
-            className="w-full py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all"
+            className="w-full py-2.5 bg-gray-100 text-gray-500 rounded-2xl font-semibold hover:bg-gray-200 transition-all text-sm"
           >← Back</button>
         </div>
       </div>
