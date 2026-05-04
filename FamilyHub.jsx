@@ -460,7 +460,7 @@ function MobileBottomNav({ active, setActive, pendingCount }) {
 }
 
 /* ── CALENDAR ───────────────────────────────────────────────────────────── */
-const blankEvt = () => ({ title:"", date:ds(Y,M,D), time:"", members:[], colorMember:"", recurring:"none", countdown:false });
+const blankEvt = () => ({ title:"", date:ds(Y,M,D), time:"", members:[], colorMember:"", recurring:"none", countdown:false, location:"", notes:"" });
 
 function EventModal({ evt, title, onSave, onClose }) {
   const { members } = useFamily();
@@ -517,6 +517,12 @@ function EventModal({ evt, title, onSave, onClose }) {
           <input type="checkbox" checked={!!f.countdown} onChange={e => set({ countdown: e.target.checked })} className="rounded" />
           <span className="text-sm text-gray-700">Show countdown banner</span>
         </label>
+        <Fld label="Location">
+          <input value={f.location || ""} onChange={e => set({ location: e.target.value })} className={INP} placeholder="Address or place name" />
+        </Fld>
+        <Fld label="Notes">
+          <textarea value={f.notes || ""} onChange={e => set({ notes: e.target.value })} className={INP + " resize-none"} rows={3} placeholder="Any extra details…" />
+        </Fld>
       </div>
       <div className="flex gap-3 mt-6">
         <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
@@ -1091,7 +1097,7 @@ function AIAssistantTab({ members, events, chores, wallets, goals, budget }) {
 }
 
 /* ── CHORES ─────────────────────────────────────────────────────────────── */
-const blankChore = () => ({ title:"", assignee:"", points:10, reward:1.00, category:"bedroom", recurring:"daily", timesRequired:1 });
+const blankChore = () => ({ title:"", assignee:"", points:10, reward:1.00, category:"bedroom", recurring:"daily", timesRequired:1, dueDate:"" });
 
 function ChoreModal({ chore, title, onSave, onClose }) {
   const { members } = useFamily();
@@ -1131,6 +1137,9 @@ function ChoreModal({ chore, title, onSave, onClose }) {
               onChange={e => set({ timesRequired: Math.max(1, +e.target.value || 1) })} className={INP} />
           </Fld>
         </div>
+        <Fld label="Due Date (optional)">
+          <input type="date" value={f.dueDate || ""} onChange={e => set({ dueDate: e.target.value })} className={INP} />
+        </Fld>
       </div>
       <div className="flex gap-3 mt-6">
         <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
