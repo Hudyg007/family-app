@@ -30,7 +30,7 @@ const fmtShort = (d) => d.toLocaleDateString("en-US", { month: "short", day: "nu
 
 export default function WeeklyCalendarGrid({ mealPlanner, setMealPlanner }) {
   const [weekStart,   setWeekStart]   = useState(getMonday);
-  const [activeCell,  setActiveCell]  = useState(null); // { date, mealType }
+  const [activeCell,  setActiveCell]  = useState(null);
   const [addingType,  setAddingType]  = useState(false);
   const [newType,     setNewType]     = useState("");
 
@@ -71,11 +71,11 @@ export default function WeeklyCalendarGrid({ mealPlanner, setMealPlanner }) {
         </button>
       </div>
 
-      {/* Horizontally scrollable grid */}
-      <div className="overflow-x-auto -mx-2 px-2 pb-2">
-        <div style={{ minWidth: 580 }}>
+      {/* Grid — columns flex to fill the screen on all device sizes */}
+      <div className="pb-2">
+        <div>
           {/* Day header row */}
-          <div className="grid gap-1 mb-2" style={{ gridTemplateColumns: "72px repeat(7, 1fr)" }}>
+          <div className="grid gap-1 mb-2" style={{ gridTemplateColumns: "56px repeat(7, 1fr)" }}>
             <div />
             {weekDates.map((d, i) => (
               <div key={i} className={`text-center py-1.5 rounded-xl text-xs ${toStr(d) === today ? "bg-indigo-600 text-white font-bold" : "text-gray-500 font-semibold"}`}>
@@ -87,7 +87,7 @@ export default function WeeklyCalendarGrid({ mealPlanner, setMealPlanner }) {
 
           {/* Meal type rows */}
           {mealPlanner.mealTypes.map((mealType) => (
-            <div key={mealType} className="grid gap-1 mb-1.5" style={{ gridTemplateColumns: "72px repeat(7, 1fr)" }}>
+            <div key={mealType} className="grid gap-1 mb-1.5" style={{ gridTemplateColumns: "56px repeat(7, 1fr)" }}>
               <div className="flex items-center pr-1">
                 <span className="text-xs font-semibold text-gray-500 truncate">{mealType}</span>
               </div>
@@ -106,13 +106,12 @@ export default function WeeklyCalendarGrid({ mealPlanner, setMealPlanner }) {
           ))}
 
           {/* Add meal type row */}
-          <div className="mt-4" style={{ paddingLeft: 80 }}>
+          <div className="mt-4" style={{ paddingLeft: 60 }}>
             {addingType ? (
               <div className="flex items-center gap-2">
                 <input
                   value={newType}
                   onChange={(e) => setNewType(e.target.value)}
-                 
                   placeholder="e.g. Snack"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") addMealType();
