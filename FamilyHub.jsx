@@ -9,7 +9,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell } from "recharts";
 import { useAuth, LS_DATA, getDataKey } from "./src/contexts/AuthContext.jsx";
 import MealPlannerTab, { DEFAULT_MEAL_PLANNER } from "./src/components/adult/mealplanner/MealPlannerTab.jsx";
-import LandingScreen       from "./src/componenhts/auth/LandingScreen.jsx";
+import LandingScreen       from "./src/components/auth/LandingScreen.jsx";
 import EmailEntry          from "./src/components/auth/EmailEntry.jsx";
 import EmailVerification   from "./src/components/auth/EmailVerification.jsx";
 import CreatePassword      from "./src/components/auth/CreatePassword.jsx";
