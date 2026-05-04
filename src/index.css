@@ -48,3 +48,11 @@ body {
 input, select, textarea {
   font-size: 16px;
 }
+
+/* Fix iOS Safari 100vh gap — replace Tailwind's min-h-screen (100vh) with
+   100dvh which correctly excludes Safari's chrome on iPhone.             */
+@supports (min-height: 100dvh) {
+  .min-h-screen {
+    min-height: 100dvh !important;
+  }
+}
