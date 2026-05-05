@@ -2708,7 +2708,7 @@ function IssueReportModal({ reporter, accountEmail, onSubmit, onClose }) {
 }
 
 /* ── FAMILY MEMBER SELECTION ─────────────────────────────────────────────── */
-function FamilyMemberSelection({ members, onLogin, onSignOut, onSwitchAccount, onDeleteAccount, accountEmail }) {
+function FamilyMemberSelection({ members, onLogin, onSignOut, onSwitchAccount, onDeleteAccount, accountEmail, returningUser }) {
   const [mode, setMode] = useState(null); // null | "parent" | "kid"
   const [selectedKid, setSelectedKid] = useState(null);
   const [pin, setPin] = useState("");
@@ -2742,6 +2742,54 @@ function FamilyMemberSelection({ members, onLogin, onSignOut, onSwitchAccount, o
 
   // Main entry screen
   if (!mode) {
+    /* ── Compact returning-user layout (3rd+ visit) ── */
+    if (returningUser) {
+      return (
+        <div className="min-h-screen flex items-center justify-center relative safe-top safe-bottom"
+             style={{ background:"linear-gradient(135deg,#1E1B4B 0%,#312E81 50%,#4338CA 100%)" }}>
+          <AppStyles />
+          {/* Small sign-out button top-right */}
+          <div style={{ position:"absolute", right:16, top:"calc(env(safe-area-inset-top) + 14px)", zIndex:100 }}>
+            <button
+              onClick={onSignOut}
+              style={{
+                padding:"5px 12px",
+                fontSize:12, fontWeight:500,
+                color:"rgba(255,255,255,0.65)",
+                background:"rgba(255,255,255,0.1)",
+                border:"1px solid rgba(255,255,255,0.18)",
+                borderRadius:20,
+                cursor:"pointer",
+                WebkitTapHighlightColor:"transparent",
+              }}
+            >Sign out</button>
+          </div>
+          <div className="text-center fadeUp px-6">
+            <p className="text-indigo-200 mb-8 text-base">Who's using the app?</p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-sm mx-auto">
+              <button onClick={() => setMode("parent")}
+                className="flex-1 flex flex-col items-center gap-3 bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-3xl p-6 transition-all hover:scale-105 backdrop-blur"
+              >
+                <span className="text-4xl">👪</span>
+                <span className="font-bold text-base">Parent</span>
+                <span className="text-indigo-200 text-xs">Full access</span>
+              </button>
+              {kids.length > 0 && (
+                <button onClick={() => setMode("kid")}
+                  className="flex-1 flex flex-col items-center gap-3 bg-white/15 hover:bg-white/25 border border-white/30 text-white rounded-3xl p-6 transition-all hover:scale-105 backdrop-blur"
+                >
+                  <span className="text-4xl">🧒</span>
+                  <span className="font-bold text-base">Kid</span>
+                  <span className="text-indigo-200 text-xs">My stuff</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ── Full first-time welcome (first 2 visits) ── */
     return (
       <div className="min-h-screen flex items-center justify-center relative safe-top safe-bottom" style={{ background:"linear-gradient(135deg,#1E1B4B 0%,#312E81 50%,#4338CA 100%)" }}>
         <AppStyles />
@@ -3628,9 +3676,24 @@ export default function App() {
   const [headerMenuOpen,  setHeaderMenuOpen]  = useState(false);
   const avatarBtnRef = useRef(null);
 
+  /* Track how many times this device has reached the family-select screen */
+  const sessionCountedRef = useRef(false);
+  const [deviceVisits, setDeviceVisits] = useState(() =>
+    parseInt(localStorage.getItem("fam_device_visits") || "0", 10)
+  );
+
   /* Load/reload family data whenever we land on the family-select screen */
   useEffect(() => {
     if (screen !== "family-select") return;
+    /* Increment visit count once per app session */
+    if (!sessionCountedRef.current) {
+      sessionCountedRef.current = true;
+      setDeviceVisits(prev => {
+        const next = prev + 1;
+        localStorage.setItem("fam_device_visits", String(next));
+        return next;
+      });
+    }
 
     const applyData = (d) => {
       if (!d) return;
@@ -3817,6 +3880,7 @@ export default function App() {
           onSwitchAccount={handleSwitchAccount}
           onDeleteAccount={handleDeleteAccount}
           accountEmail={account?.email}
+          returningUser={deviceVisits > 2}
         />
       </FamilyCtx.Provider>
     );
