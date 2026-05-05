@@ -1073,7 +1073,7 @@ function AIAssistantTab({ members, events, chores, wallets, goals, budget }) {
       </div>
 
       {/* ── Input bar ── */}
-      <div className="flex gap-2 pt-3 border-t border-gray-100">
+      <div className="flex gap-2 pt-3 pb-2 border-t border-gray-200" style={{ background:"white", marginLeft:"-16px", marginRight:"-16px", paddingLeft:"16px", paddingRight:"16px" }}>
         <textarea
           ref={inputRef}
           value={input}
@@ -3940,7 +3940,7 @@ export default function App() {
                column so the chat input bar can stay pinned at the bottom.
                All other tabs use the normal vertically-scrolling wrapper. */}
           {active === "assistant" ? (
-            <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0, overflow:"hidden", background:"#ECEAF8", padding:"0 16px", paddingBottom:"calc(env(safe-area-inset-bottom) + 60px)" }}>
+            <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0, overflow:"hidden", background:"#ECEAF8", padding:"0 16px", paddingBottom:"calc(env(safe-area-inset-bottom) + 76px)" }}>
               {renderPage()}
             </div>
           ) : (
