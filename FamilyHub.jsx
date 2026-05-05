@@ -2388,11 +2388,13 @@ function Dashboard({ events, chores, wallets }) {
   const kids = members.filter(m => m.role === "child");
   const todayEvts = events.filter(e => e.date === ds(Y, M, D));
   const evC = ev => getColor(ev.colorMember) || { bg:"#6366F1", light:"#EEF2FF" };
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
     <div>
       <PageHeader
-        title="Good morning, family! 👋"
+        title={`${greeting}, family! 👋`}
         subtitle={new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric", year:"numeric" })}
       />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
