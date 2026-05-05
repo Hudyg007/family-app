@@ -94,7 +94,7 @@ const NAV = [
   { id:"calendar", icon:Calendar,    label:"Calendar"     },
   { id:"chores",   icon:CheckSquare, label:"Chores"       },
   { id:"lists",    icon:ShoppingCart,label:"Lists"        },
-  { id:"meals",    icon:Utensils,    label:"Meal Planner" },
+  { id:"meals",    icon:Utensils,    label:"Meal"         },
   { id:"wallet",   icon:Wallet,      label:"Wallet"       },
   { id:"goals",    icon:Target,      label:"Goals"        },
   { id:"budget",   icon:BarChart2,   label:"Budget"       },
@@ -380,7 +380,7 @@ function MobileBottomNav({ active, setActive, pendingCount }) {
           boxShadow: "0 -4px 20px rgba(0,0,0,0.15)",
           zIndex: 100,
           width: "100%",
-          paddingBottom: "max(calc(env(safe-area-inset-bottom) - 18px), 4px)",
+          paddingBottom: 0,
         }}
       >
         {primaryItems.map(n => {
@@ -950,6 +950,34 @@ const SUGGESTED_PROMPTS = [
   "Any suggestions to help us stay more organised?",
 ];
 
+/* ── Markdown renderer for AI responses ── */
+function inlineMd(text) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((p, i) =>
+    p.startsWith('**') && p.endsWith('**')
+      ? React.createElement('strong', { key: i }, p.slice(2, -2))
+      : p
+  );
+}
+function renderAIMd(text) {
+  const blocks = text.split(/\n\n+/);
+  return blocks.map((block, bi) => {
+    const lines = block.split('\n').filter(l => l.trim());
+    if (!lines.length) return null;
+    const isList = lines.every(l => /^[\*\-]\s+/.test(l.trim()));
+    if (isList) {
+      return React.createElement('ul', { key: bi, style: { margin: '4px 0', padding: 0, listStyle: 'none' } },
+        lines.map((l, li) =>
+          React.createElement('li', { key: li, style: { display: 'flex', gap: 6, marginBottom: 4 } },
+            React.createElement('span', { style: { color: '#6366f1', flexShrink: 0 } }, '•'),
+            React.createElement('span', null, ...inlineMd(l.replace(/^[\*\-]\s+/, '')))
+          )
+        )
+      );
+    }
+    return React.createElement('p', { key: bi, style: { margin: '0 0 4px 0' } }, ...inlineMd(block));
+  });
+}
 function AIAssistantTab({ members, events, chores, wallets, goals, budget }) {
   const [messages,  setMessages]  = useState([]);
   const [input,     setInput]     = useState("");
@@ -1037,12 +1065,12 @@ function AIAssistantTab({ members, events, chores, wallets, goals, budget }) {
             <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm ${m.role === "user" ? "bg-indigo-600 text-white" : "bg-indigo-50 text-indigo-600"}`}>
               {m.role === "user" ? <User size={14} /> : <Sparkles size={14} />}
             </div>
-            <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+            <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
               m.role === "user"
-                ? "bg-indigo-600 text-white rounded-tr-sm"
+                ? "bg-indigo-600 text-white rounded-tr-sm whitespace-pre-wrap"
                 : "bg-white border border-gray-100 text-gray-800 rounded-tl-sm shadow-sm"
             }`}>
-              {m.content}
+              {m.role === "user" ? m.content : renderAIMd(m.content)}
             </div>
           </div>
         ))}
@@ -3956,7 +3984,7 @@ export default function App() {
           ) : (
             <div style={{ flex:1, overflowY:"auto", WebkitOverflowScrolling:"touch", background:"#ECEAF8", minHeight:0, overflowX:"hidden" }}>
               <div className="p-4 md:p-8 max-w-6xl mx-auto" style={{
-                paddingBottom:"calc(env(safe-area-inset-bottom) + 80px)",
+                paddingBottom:"calc(env(safe-area-inset-bottom) + 64px)",
               }}>
                 {renderPage()}
               </div>
