@@ -380,7 +380,7 @@ function MobileBottomNav({ active, setActive, pendingCount }) {
           boxShadow: "0 -4px 20px rgba(0,0,0,0.15)",
           zIndex: 100,
           width: "100%",
-          paddingBottom: "env(safe-area-inset-bottom)",
+          paddingBottom: "max(calc(env(safe-area-inset-bottom) - 18px), 4px)",
         }}
       >
         {primaryItems.map(n => {
