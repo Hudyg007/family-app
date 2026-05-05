@@ -1073,24 +1073,34 @@ function AIAssistantTab({ members, events, chores, wallets, goals, budget }) {
       </div>
 
       {/* ── Input bar ── */}
-      <div className="flex gap-2 pt-3 pb-2 border-t border-gray-200" style={{ background:"white", marginLeft:"-16px", marginRight:"-16px", paddingLeft:"16px", paddingRight:"16px" }}>
-        <textarea
-          ref={inputRef}
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={handleKey}
-          placeholder="Ask me anything…"
-          rows={1}
-          className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          style={{ maxHeight: 120, overflowY: "auto" }}
-        />
-        <button
-          onClick={() => sendMessage()}
-          disabled={!input.trim() || loading}
-          className="w-10 h-10 bg-indigo-600 text-white rounded-xl flex items-center justify-center hover:bg-indigo-700 disabled:opacity-40 flex-shrink-0 self-end"
+      <div className="pt-3 pb-1">
+        <div
+          className="flex items-end gap-2 rounded-2xl px-3 py-2 transition-all"
+          style={{
+            background: "white",
+            border: "1.5px solid #C7D2FE",
+            boxShadow: "0 2px 12px rgba(99,102,241,0.08)",
+          }}
+          onFocus={() => {}}
         >
-          <Send size={16} />
-        </button>
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKey}
+            placeholder="Ask me anything…"
+            rows={1}
+            className="flex-1 text-sm resize-none focus:outline-none bg-transparent text-gray-800 placeholder-gray-400 py-1"
+            style={{ maxHeight: 120, overflowY: "auto" }}
+          />
+          <button
+            onClick={() => sendMessage()}
+            disabled={!input.trim() || loading}
+            className="w-9 h-9 bg-indigo-600 text-white rounded-xl flex items-center justify-center hover:bg-indigo-700 disabled:opacity-40 flex-shrink-0 transition-colors"
+          >
+            <Send size={15} />
+          </button>
+        </div>
       </div>
     </div>
   );
